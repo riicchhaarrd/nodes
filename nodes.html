@@ -1,4 +1,3 @@
-
 <style>html,body{margin:0;}</style>
 <canvas></canvas>
 <script>
@@ -11,61 +10,97 @@ var ctx = canvas.getContext("2d");
 
 let nodes = [];
 
+//https://stackoverflow.com/questions/1255512/how-to-draw-a-rounded-rectangle-on-html-canvas
+CanvasRenderingContext2D.prototype.roundRect = function (x, y, w, h, r) {
+  if (w < 2 * r) r = w / 2;
+  if (h < 2 * r) r = h / 2;
+  this.beginPath();
+  this.moveTo(x+r, y);
+  this.arcTo(x+w, y,   x+w, y+h, r);
+  this.arcTo(x+w, y+h, x,   y+h, r);
+  this.arcTo(x,   y+h, x,   y,   r);
+  this.arcTo(x,   y,   x+w, y,   r);
+  this.closePath();
+  return this;
+}
+
 class signal
 {
-    constructor(type,x,y,rad)
-    {
-        this.type=type;
-        this.x=x;
-        this.y=y;
-        this.radius = rad;
-        this.state = Math.random()>0.5?1:0;
-        this.link = null;
-    }
-    
-    in_bounds(x, y)
-    {
-        let dx = x-this.x;
-        let dy = y-this.y;
-        let dist = Math.sqrt(dx*dx+dy*dy);
-        return dist < this.radius;
-    }
-    
-    get_state()
-    {
-        if(this.type=="input")
-        {
-            if(this.link==null)
-                return "?";
-            return this.link.get_state();
-        }
-        return this.state;
-    }
-    
-    draw(selected)
-    {
-        ctx.save();
-        ctx.strokeStyle=this.type=="input"?"green":"red";
-        ctx.fillStyle=this.type=="input"?"green":"red";
-        ctx.beginPath();
-        ctx.arc(this.x, this.y, this.radius, 0, 2 * Math.PI);
-        if(selected)
-        ctx.fill();
-        else
-        ctx.stroke();
-        
-        ctx.fillText(this.get_state(), this.x, this.y);
-        
-        if(this.link != null)
-        {
-            ctx.beginPath();
-            ctx.moveTo(this.x,this.y);
-            ctx.lineTo(this.link.x,this.link.y);
-            ctx.closePath();
-            ctx.stroke();
-        }
-        ctx.restore();
-    }
+	constructor(node,type,x,y,rad)
+	{
+		this.node=node;
+		this.type=type;
+		this.x=x;
+		this.y=y;
+		this.radius = rad;
+		this.state = "?";
+		this.link = null;
+	}
+	
+	in_bounds(x, y)
+	{
+		let dx = x-this.x;
+		let dy = y-this.y;
+		let dist = Math.sqrt(dx*dx+dy*dy);
+		return dist < this.radius*2;
+	}
+	
+	get_state()
+	{
+		if(this.type=="input")
+		{
+			if(this.link==null)
+				return "?";
+			return this.link.get_state();
+		}
+		return this.state;
+	}
+	
+	move_relative(dx,dy)
+	{
+		this.x+=dx;
+		this.y+=dy;
+	}
+	
+	draw(selected)
+	{
+		ctx.save();
+		ctx.fillStyle="#fff";
+		ctx.beginPath();
+		ctx.arc(this.x, this.y, this.radius, 0, 2 * Math.PI);
+		ctx.fill();
+		ctx.restore();
+		ctx.save();
+		ctx.font="14px arial";
+		ctx.strokeStyle=this.type=="input"?"green":"red";
+		ctx.fillStyle=this.type=="input"?"green":"red";
+		ctx.beginPath();
+		ctx.arc(this.x, this.y, this.radius, 0, 2 * Math.PI);
+		if(selected)
+		ctx.fill();
+		else
+		ctx.stroke();
+		
+		ctx.fillText(this.get_state(), this.x + 10, this.y);
+		
+		
+		if(this.link != null)
+		{
+			ctx.beginPath();
+			ctx.moveTo(this.x,this.y);
+			let dx = this.link.x;
+			let dy = this.link.y;
+			ctx.bezierCurveTo(
+				(this.x + dx) / 2, this.y,
+				(this.x + dx) / 2, dy,
+				dx,dy
+			);
+			//ctx.lineTo(this.link.x,this.link.y);
+			//ctx.closePath();
+			ctx.stroke();
+		}
+		ctx.restore();
+	}
 };
 
 //todo:
@@ -75,138 +110,344 @@ var selected_signal = null;
 
 class node_t
 {
-    constructor(x,y,text)
-    {
-        this.x = x;
-        this.y = y;
-        
-        ctx.font="24px arial";
-        let m = ctx.measureText(text);
-        this.width = m.width * 2;
-        this.height = (m.actualBoundingBoxAscent + m.actualBoundingBoxDescent) * 2;
-        this.text = text;
-        
-        this.link = null;
-        
-        this.signals = [];
-        
-        let rad = this.height / 8;
-        for(let i = 0; i < 2; ++i)
-        {
-            this.signals.push(
-                new signal("input", this.x+rad*2,this.y+(i+1)*rad*3,rad)
-            );
-        }
-        for(let i = 0; i < 1; ++i)
-        {
-            this.signals.push(
-                new signal("output", this.x+this.width-rad*2,this.y+(i+1)*rad*3,rad)
-            );
-        }
-    }
-    
-    get_selected_signal(x,y)
-    {
-        for(let inp in this.signals)
-        {
-            if(this.signals[inp].in_bounds(x,y))
-                return this.signals[inp];
-        }
-        return null;
-    }
-    
-    draw(selected)
-    {
-        ctx.beginPath();
-        ctx.rect(this.x, this.y, this.width, this.height);
-        ctx.closePath();
-        ctx.stroke();
-        ctx.fillText(this.text, this.x + this.width * 0.25, this.y + this.height - this.height * 0.25);
-        
-        for(let inp in this.signals)
-        {
-            let selected = this.signals[inp].in_bounds(mouse_x,mouse_y);
-            this.signals[inp].draw(selected || selected_signal == this.signals[inp]);
-        }
-    }
-    
-    in_bounds(x, y)
-    {
-        return x >= this.x && x <= this.x + this.width && y >= this.y && y <= this.y + this.height;
-    }
-}
+	constructor(x,y,text)
+	{
+		this.x = x;
+		this.y = y;
+		
+		ctx.font="24px arial";
+		let m = ctx.measureText(text);
+		this.width = m.width * 4;
+		this.height = (m.actualBoundingBoxAscent + m.actualBoundingBoxDescent) * 3;
+		this.text = text;
+		
+		this.link = null;
+		
+		this.signals = [];
+		
+		let rad = this.height / 8;
+		this.inputs = [];
+		for(let i = 0; i < 2; ++i)
+		{
+			let inp = new signal(this, "input", this.x,this.y+(i+1)*rad*3-rad/2,rad);
+			this.inputs.push(inp);
+			
+			this.signals.push(
+				inp
+			);
+		}
+		this.output = new signal(this, "output", this.x+this.width,this.y+this.height/2-rad/2,rad);
+		for(let i = 0; i < 1; ++i)
+		{
+			this.signals.push(
+				//new signal("output", this.x+this.width-rad*2,this.y+(i+1)*rad*3,rad)
+				this.output
+			);
+		}
+	}
+	
+	value_changed()
+	{
+	}
+	
+	add_signal(type)
+	{
+		if(type == "input")
+		{				
+			this.signals.push(
+				new signal(this, "input", this.x,this.y+(this.signals.length+1)*rad*3-rad/2,rad)
+			);
+		}
+	}
+	
+	move_absolute(x,y)
+	{
+		let dx = x-this.x;
+		let dy = y-this.y;
+
+		this.x += dx;
+		this.y += dy;
+		
+		for(let inp in this.signals)
+		{
+			this.signals[inp].move_relative(dx,dy);
+		}
+	}
+	
+	remove()
+	{
+		for(let itx in this.signals)
+		{
+			let sig = this.signals[itx];
+			if(sig.link != null)
+			{
+				sig.link.link = null;
+				sig.link.node.value_changed();
+			}
+		}
+	}
+	
+	get_selected_signal(x,y)
+	{
+		for(let inp in this.signals)
+		{
+			if(this.signals[inp].in_bounds(x,y))
+				return this.signals[inp];
+		}
+		return null;
+	}
+	
+	draw(selected)
+	{
+		/*
+		ctx.beginPath();
+		ctx.rect(this.x, this.y, this.width, this.height);
+		ctx.closePath();
+		ctx.stroke();
+		*/
+		
+		let rad=10;
+		ctx.save();
+		
+		ctx.save();
+			//ctx.fillStyle="#aaa";
+			let angle = 90 * (Math.PI / 180);
+			let f = 0.9;
+			let grd = ctx.createLinearGradient(this.x,this.y+this.height*f,this.x+Math.cos(angle)*this.width,this.y+Math.sin(angle)*this.height);
+			grd.addColorStop(0, "#fff");
+			grd.addColorStop(1, "#aaa");
+
+			// Fill with gradient
+			ctx.fillStyle = grd;
+			ctx.roundRect(this.x,this.y,this.width,this.height,rad).fill();
+			//ctx.fillStyle="#ccc";
+			//ctx.roundRect(this.x,this.y,this.width,this.height*f,rad).fill();
+		ctx.restore();
+		
+		if(selected)
+			ctx.lineWidth = 4;
+		ctx.strokeStyle="#333";
+		ctx.roundRect(this.x,this.y,this.width,this.height,rad).stroke();
+		ctx.restore();
+		ctx.fillText(this.text, this.x + this.width * (0.25+0.125), this.y + this.height - this.height * (1/3));
+		
+		for(let inp in this.signals)
+		{
+			let selected = this.signals[inp].in_bounds(mouse_x,mouse_y);
+			this.signals[inp].draw(selected || selected_signal == this.signals[inp]);
+		}
+	}
+	
+	in_bounds(x, y)
+	{
+		let v = 30;
+		let tx = this.x - v;
+		let ty = this.y - v;
+		let tw = this.width + v * 2;
+		let th = this.height + v * 2;
+		return x >= tx && x <= tx + tw && y >= ty && y <= ty + th;
+	}
+};
+
+class node_0 extends node_t
+{
+	constructor(x,y)
+	{
+		super(x,y,"false");
+		this.output.state = 0;
+	}
+};
+
+class node_1 extends node_t
+{
+	constructor(x,y)
+	{
+		super(x,y,"true");
+		this.output.state = 1;
+	}
+};
+
+class node_and extends node_t
+{
+	constructor(x,y)
+	{
+		super(x,y,"and");
+	}
+	
+	value_changed()
+	{
+		this.output.state = (this.inputs[0].get_state() > 0 && this.inputs[1].get_state() > 0) ? 1 : 0;
+	}
+};
+
+class node_or extends node_t
+{
+	constructor(x,y)
+	{
+		super(x,y,"or");
+	}
+	
+	value_changed()
+	{
+		this.output.state = (this.inputs[0].get_state() > 0 || this.inputs[1].get_state() > 0) ? 1 : 0;
+	}
+};
+
+class node_xor extends node_t
+{
+	constructor(x,y)
+	{
+		super(x,y,"xor");
+	}
+	
+	value_changed()
+	{
+		let s1 = this.inputs[0].get_state();
+		let s2 = this.inputs[1].get_state();
+		this.output.state = s1 ^ s2;
+	}
+};
 
 var mouse_x=0,mouse_y=0;
 
-window.onmousemove=(ev)=>{mouse_x = ev.clientX; mouse_y = ev.clientY;};
-
 function get_selected_node()
 {
-    for(let itx in nodes)
-    {
-        let node = nodes[itx];
-        if(node.in_bounds(mouse_x,mouse_y))
-            return node;
-    }
-    return null;
+	for(let itx in nodes)
+	{
+		let node = nodes[itx];
+		if(node.in_bounds(mouse_x,mouse_y))
+			return node;
+	}
+	return null;
 }
+
+let node_candidate = null;
+let signal_candidate = null;
+let moving = false;
 
 let selected_node = null;
 
-window.onclick=(ev)=>
+window.onmouseup=(ev)=>
 {
-    let node = get_selected_node();
-    if(node == null)
-        nodes.push(new node_t(ev.clientX, ev.clientY, "test"));
-    else
-    {
-        selected_node = node;
-        selected_signal = node.get_selected_signal(ev.clientX,ev.clientY);
-    }
+	moving=false;
+	selected_node=null;
 };
 
-window.oncontextmenu=(ev)=>
+window.oncontextmenu=(ev)=>{return false;}
+
+window.onmousedown=(ev)=>
 {
-    if(selected_node==null)return false;
-    let node = get_selected_node();
-    if(node != null)
-    {
-        inp = node.get_selected_signal(ev.clientX,ev.clientY);
-        if(selected_signal!=null)
-        {
-            if(inp==null||selected_signal.type!=inp.type)
-            {
-            if(selected_signal.link!=null)
-            selected_signal.link.link=null;
-            if(inp.link!=null&&inp.link.link!=null)
-            inp.link.link=null;
-            selected_signal.link = inp;
-            inp.link=selected_signal;
-            }
-        }
-    }
-    return false;
+	if(ev.buttons!=1)
+	{
+		let node_index = null;
+		for(let itx in nodes)
+		{
+			let node = nodes[itx];
+			if(node.in_bounds(ev.clientX,ev.clientY))
+			{
+				node_index = itx;
+				break;
+			}
+		}
+		if(node_index != null)
+		{
+			nodes[node_index].remove();
+			nodes.splice(node_index, 1);
+		}
+		return false;
+	}
+	let node = get_selected_node();
+	selected_node=node;
+	if(node!=null)
+	{
+		let sig = node.get_selected_signal(mouse_x, mouse_y);
+		if(sig == null)
+			moving=true;
+	}
+};
+
+window.onmousemove=(ev)=>
+{
+	mouse_x = ev.clientX; mouse_y = ev.clientY;
+	
+	//get current elements under mouse
+
+	node_candidate = get_selected_node();
+};
+
+window.onkeydown=(ev)=>
+{
+	switch(ev.key)
+	{
+		case " ":
+		nodes.push(new node_t(mouse_x,mouse_y, "test"));
+		break;
+		
+		case "1":
+		nodes.push(new node_0(mouse_x,mouse_y));
+		break;
+		case "2":
+		nodes.push(new node_1(mouse_x,mouse_y));
+		break;
+		case "3":
+		nodes.push(new node_and(mouse_x,mouse_y));
+		break;
+		case "4":
+		nodes.push(new node_or(mouse_x,mouse_y));
+		break;
+		case "5":
+		nodes.push(new node_xor(mouse_x,mouse_y));
+		break;
+	}
+};
+
+window.onclick=(ev)=>
+{
+	let node = get_selected_node();
+	if(node!=null)
+	{
+		let inp = node.get_selected_signal(ev.clientX, ev.clientY);
+		if(inp != null)
+		{
+			if(selected_signal != null && inp != selected_signal && inp.type != selected_signal.type)
+			{			
+				if(selected_signal.link!=null)
+					selected_signal.link.link=null;
+				if(inp.link!=null&&inp.link.link!=null)
+					inp.link.link=null;
+				selected_signal.link = inp;
+				inp.link=selected_signal;
+				selected_signal=null;
+				node.value_changed();
+			} else
+				selected_signal = inp;
+		}
+	}
 };
 
 function draw()
 {
-    ctx.clearRect(0,0,canvas.width,canvas.height);
-    for(let itx in nodes)
-    {
-        let node = nodes[itx];
-        let selected = node.in_bounds(mouse_x,mouse_y);
-        node.draw(selected || node == selected_node);
-        
-        if(node.link != null)
-        {
-            ctx.beginPath();
-            ctx.moveTo(node.x,node.y);
-            ctx.lineTo(node.link.x,node.link.y);
-            ctx.closePath();
-            ctx.stroke();
-        }
-    }
-    window.requestAnimationFrame(draw);
+	if(selected_node != null && moving)
+	{
+		selected_node.move_absolute(mouse_x,mouse_y);
+	}
+	ctx.clearRect(0,0,canvas.width,canvas.height);
+	for(let itx in nodes)
+	{
+		let node = nodes[itx];
+		let selected = node.in_bounds(mouse_x,mouse_y);
+		node.draw(node_candidate == node || selected || node == selected_node);
+		
+		if(node.link != null)
+		{
+			ctx.beginPath();
+			ctx.moveTo(node.x,node.y);
+			ctx.lineTo(node.link.x,node.link.y);
+			ctx.closePath();
+			ctx.stroke();
+		}
+	}
+	window.requestAnimationFrame(draw);
 }
 
 window.requestAnimationFrame(draw);
