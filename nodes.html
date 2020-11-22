@@ -37,6 +37,18 @@ class signal
 		this.link = null;
 	}
 	
+	set_state(v)
+	{
+		this.state = v;
+		if(this.type == "output")
+		{
+			if(this.link != null)
+			{
+				this.link.set_state(v);
+			}
+		}
+	}
+	
 	in_bounds(x, y)
 	{
 		let dx = x-this.x;
@@ -54,6 +66,15 @@ class signal
 			return this.link.get_state();
 		}
 		return this.state;
+	}
+	
+	get_state_text()
+	{
+		if(typeof this.get_state() == "number" && !Number.isSafeInteger(this.get_state()))
+		{
+			return this.get_state().toFixed(2);
+		}
+		return this.get_state();
 	}
 	
 	move_relative(dx,dy)
@@ -81,7 +102,7 @@ class signal
 		else
 		ctx.stroke();
 		
-		ctx.fillText(this.get_state(), this.x + 10, this.y);
+		ctx.fillText(this.get_state_text(), this.x + 10, this.y);
 		
 		
 		if(this.link != null)
@@ -103,6 +124,14 @@ class signal
 	}
 };
 
+class signal_proxy extends signal
+{
+	constructor(node,type,x,y,rad)
+	{
+		super(node,type,x,y,rad);
+	}
+};
+
 //todo:
 //signal_1 extends signal signal_0 extends signal, signal_and_gate extends signal
 
@@ -115,6 +144,7 @@ class node_t
 		this.x = x;
 		this.y = y;
 		
+		this.color = "rgb(255,255,255)";
 		ctx.font="24px arial";
 		let m = ctx.measureText(text);
 		this.width = m.width * 2;
@@ -137,6 +167,7 @@ class node_t
 				inp
 			);
 		}
+		this.outputs=[];
 		this.output = new signal(this, "output", this.x+this.width,this.y+this.height/2-rad/2,rad);
 		for(let i = 0; i < 1; ++i)
 		{
@@ -144,7 +175,29 @@ class node_t
 				//new signal("output", this.x+this.width-rad*2,this.y+(i+1)*rad*3,rad)
 				this.output
 			);
+			this.outputs.push(this.output);
 		}
+	}
+	
+	remove_all_inputs()
+	{
+		for(let i = this.signals.length - 1; i>=0; i--)
+		{
+			if(this.signals[i].type=="input")
+				this.signals.splice(i, 1);
+		}
+		this.inputs = [];
+	}
+	
+	remove_all_outputs()
+	{
+		for(let i = this.signals.length - 1; i>=0; i--)
+		{
+			if(this.signals[i].type=="output")
+				this.signals.splice(i, 1);
+		}
+		this.outputs = [];
+		this.output = null;
 	}
 	
 	value_changed()
@@ -155,12 +208,19 @@ class node_t
 	{
 		if(type == "input")
 		{
-			let sig = new signal(this, "input", this.x,this.y+(this.signals.length)*this.io_radius*3-this.io_radius/2,this.io_radius);
+			let sig = new signal(this, "input", this.x,this.y+(this.inputs.length+1)*this.io_radius*3-this.io_radius/2,this.io_radius);
 			this.height+=(this.signals.length)*this.io_radius*3-this.io_radius/2;
 			this.inputs.push(sig);
 			this.signals.push(
 				sig
 			);
+		} else if(type == "output")
+		{
+			let sig = new signal(this, "output", this.x+this.width,this.y+(this.outputs.length+1)*this.io_radius*3-this.io_radius/2,this.io_radius);
+			this.signals.push(
+				sig
+			);
+			this.outputs.push(sig);
 		}
 	}
 	
@@ -218,7 +278,7 @@ class node_t
 			let angle = 90 * (Math.PI / 180);
 			let f = 0.9;
 			let grd = ctx.createLinearGradient(this.x,this.y+this.height*f,this.x+Math.cos(angle)*this.width,this.y+Math.sin(angle)*this.height);
-			grd.addColorStop(0, "#fff");
+			grd.addColorStop(0, this.color);
 			grd.addColorStop(1, "#aaa");
 
 			// Fill with gradient
@@ -235,6 +295,10 @@ class node_t
 		ctx.restore();
 		ctx.fillText(this.text, this.x + this.width * (0.25), this.y + this.height - this.height * (1/3));
 		
+		ctx.save();
+			ctx.font="12px arial";
+			ctx.fillText(this.output.state==null?"null":this.output.state.constructor.name, this.x + this.width * (0.25), this.y + this.height - 5);		
+		ctx.restore();
 		for(let inp in this.signals)
 		{
 			let selected = this.signals[inp].in_bounds(mouse_x,mouse_y);
@@ -258,7 +322,8 @@ class node_rand extends node_t
 	constructor(x,y)
 	{
 		super(x,y,"random");
-		this.output.state = Math.random();
+		this.output.set_state(Math.random());
+		this.remove_all_inputs();
 	}
 };
 
@@ -267,7 +332,8 @@ class node_0 extends node_t
 	constructor(x,y)
 	{
 		super(x,y,"0");
-		this.output.state = 0;
+		this.output.set_state(0);
+		this.remove_all_inputs();
 	}
 };
 
@@ -276,7 +342,141 @@ class node_1 extends node_t
 	constructor(x,y)
 	{
 		super(x,y,"1");
-		this.output.state = 1;
+		this.output.set_state(1);
+		this.remove_all_inputs();
+	}
+};
+
+class node_constant extends node_t
+{
+	constructor(x,y)
+	{
+		super(x,y,"constant");
+		this.output.set_state(parseFloat(prompt()));
+		this.remove_all_inputs();
+	}
+};
+
+class node_vec3 extends node_t
+{
+	constructor(x,y)
+	{
+		super(x,y,"vec3");
+		this.output.set_state(
+			new vec3(parseFloat(prompt()),parseFloat(prompt()),parseFloat(prompt()))
+		);
+		this.remove_all_inputs();
+	}
+};
+
+class vec3
+{
+	constructor(x,y,z)
+	{
+		this.x=x||0;
+		this.y=y||0;
+		this.z=z||0;
+	}
+	
+	toString()
+	{
+		return "("+this.x.toFixed(2)+","+this.y.toFixed(2)+","+this.z.toFixed(2)+")";
+	}
+};
+
+class node_mathop extends node_t
+{
+	constructor(name, op, x, y)
+	{
+		super(x,y,name);
+		this.op = op;
+	}
+	
+	eq(a,b)
+	{
+		return eval(a + "" +  this.op + "" + b);
+	}
+	
+	is_vec3(a)
+	{
+		return typeof a == "object" && a.constructor.name == "vec3";
+	}
+	
+	value_changed()
+	{
+		let a = this.inputs[0].get_state();
+		let b = this.inputs[1].get_state();
+		if(typeof a == "number" && typeof b == "number")
+			this.output.set_state(this.eq(a,b));
+		else if(typeof a == "object" && typeof b == "object" && a.constructor.name == "vec3" && b.constructor.name == "vec3")
+			this.output.set_state(new vec3(this.eq(a.x,b.x),this.eq(a.y,b.y),this.eq(a.z,b.z)));
+		else if(this.is_vec3(a) && typeof b == "number")
+		{
+			this.output.set_state(new vec3(this.eq(a.x,b),this.eq(a.y,b),this.eq(a.z,b)));
+		}
+		else if(this.is_vec3(b) && typeof a == "number")
+		{
+			this.output.set_state(new vec3(this.eq(b.x,a),this.eq(b.y,a),this.eq(b.z,a)));
+		} else
+			this.output.set_state("invalid");
+	}
+};
+
+class node_normalize extends node_t
+{
+	constructor(x,y)
+	{
+		super(x,y,"normalize");
+		this.remove_all_inputs();
+		this.add_signal("input");
+	}
+	
+	value_changed()
+	{
+		let a = this.inputs[0].get_state();
+		if(typeof a == "object" && a.constructor.name == "vec3")
+		{
+			let dot = function(a,b)
+			{
+				return a.x * b.x + a.y * b.y + a.z * b.z;
+			};
+			let l = Math.sqrt(dot(a,a));
+			this.output.set_state(new vec3(a.x/l,a.y/l,a.z/l));
+		}
+		else
+			this.output.set_state("invalid");
+	}
+};
+
+class node_extract_vec3 extends node_t
+{
+	constructor(x,y)
+	{
+		super(x,y,"vec3 to 3-floats");
+		this.remove_all_inputs();
+		this.remove_all_outputs();
+		this.add_signal("input");
+		this.add_signal("output");
+		this.add_signal("output");
+		this.add_signal("output");
+		
+		this.output = new signal_proxy(this,"output",0,0,0);
+	}
+	
+	value_changed()
+	{
+		let a = this.inputs[0].get_state();
+		if(typeof a == "object" && a.constructor.name == "vec3")
+		{
+			this.outputs[0].set_state(a.x);
+			this.outputs[1].set_state(a.y);
+			this.outputs[2].set_state(a.z);
+		} else
+		{
+			this.outputs[0].set_state(a);
+			this.outputs[1].set_state(a);
+			this.outputs[2].set_state(a);
+		}
 	}
 };
 
@@ -286,42 +486,6 @@ class node_color extends node_t
 	{
 		super(x,y,"color");
 		this.add_signal("input");
-		this.color = "rgb(255,255,255)";
-	}
-	
-	draw(selected)
-	{
-		
-		let rad=10;
-		ctx.save();
-		
-		ctx.save();
-			//ctx.fillStyle="#aaa";
-			let angle = 90 * (Math.PI / 180);
-			let f = 0.9;
-			let grd = ctx.createLinearGradient(this.x,this.y+this.height*f,this.x+Math.cos(angle)*this.width,this.y+Math.sin(angle)*this.height);
-			grd.addColorStop(0, this.color);
-			grd.addColorStop(1, "#aaa");
-
-			// Fill with gradient
-			ctx.fillStyle = grd;
-			ctx.roundRect(this.x,this.y,this.width,this.height,rad).fill();
-			//ctx.fillStyle="#ccc";
-			//ctx.roundRect(this.x,this.y,this.width,this.height*f,rad).fill();
-		ctx.restore();
-		
-		if(selected)
-			ctx.lineWidth = 4;
-		ctx.strokeStyle="#333";
-		ctx.roundRect(this.x,this.y,this.width,this.height,rad).stroke();
-		ctx.restore();
-		ctx.fillText(this.text, this.x + this.width * (0.25), this.y + this.height - this.height * (1/3));
-		
-		for(let inp in this.signals)
-		{
-			let selected = this.signals[inp].in_bounds(mouse_x,mouse_y);
-			this.signals[inp].draw(selected || selected_signal == this.signals[inp]);
-		}
 	}
 	
 	value_changed()
@@ -333,6 +497,7 @@ class node_color extends node_t
 		{
 			this.color = "rgb("+r+","+g+","+b+")";
 		}
+		this.output.set_state(new vec3(r,g,b));
 	}
 };
 
@@ -345,7 +510,7 @@ class node_or extends node_t
 	
 	value_changed()
 	{
-		this.output.state = (this.inputs[0].get_state() > 0 || this.inputs[1].get_state() > 0) ? 1 : 0;
+		this.output.set_state((this.inputs[0].get_state() > 0 || this.inputs[1].get_state() > 0) ? 1 : 0);
 	}
 };
 
@@ -360,7 +525,7 @@ class node_xor extends node_t
 	{
 		let s1 = this.inputs[0].get_state();
 		let s2 = this.inputs[1].get_state();
-		this.output.state = s1 ^ s2;
+		this.output.set_state( s1 ^ s2 );
 	}
 };
 
@@ -450,6 +615,30 @@ window.onkeydown=(ev)=>
 		break;
 		case "4":
 		nodes.push(new node_1(mouse_x,mouse_y));
+		break;
+		case "5":
+		nodes.push(new node_mathop("multiply", "*", mouse_x,mouse_y));
+		break;
+		case "6":
+		nodes.push(new node_mathop("divide", "/", mouse_x,mouse_y));
+		break;
+		case "7":
+		nodes.push(new node_mathop("add", "+", mouse_x,mouse_y));
+		break;
+		case "8":
+		nodes.push(new node_mathop("subtract", "-", mouse_x,mouse_y));
+		break;
+		case "9":
+		nodes.push(new node_normalize(mouse_x,mouse_y));
+		break;
+		case "a":
+		nodes.push(new node_extract_vec3(mouse_x,mouse_y));
+		break;
+		case "b":
+		nodes.push(new node_constant(mouse_x,mouse_y));
+		break;
+		case "c":
+		nodes.push(new node_vec3(mouse_x,mouse_y));
 		break;
 	}
 };
