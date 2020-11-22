@@ -42,6 +42,7 @@ class signal
 			if(this.link != null)
 			{
 				this.link.set_state(v);
+				this.link.node.value_changed();
 			}
 		}
 	}
@@ -528,12 +529,12 @@ class node_color extends node_t
 	
 	value_changed()
 	{
-		let r = this.inputs[0].get_state() * 255;
-		let g = this.inputs[1].get_state() * 255;
-		let b = this.inputs[2].get_state() * 255;
+		let r = this.inputs[0].get_state();
+		let g = this.inputs[1].get_state();
+		let b = this.inputs[2].get_state();
 		if(!isNaN(r) && !isNaN(g) && !isNaN(b))
 		{
-			this.color = "rgb("+r+","+g+","+b+")";
+			this.color = "rgb("+(r*255)+","+(g*255)+","+(b*255)+")";
 		}
 		this.output.set_state(new vec3(r,g,b));
 	}
