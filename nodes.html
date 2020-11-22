@@ -117,7 +117,7 @@ class node_t
 		
 		ctx.font="24px arial";
 		let m = ctx.measureText(text);
-		this.width = m.width * 4;
+		this.width = m.width * 2;
 		this.height = (m.actualBoundingBoxAscent + m.actualBoundingBoxDescent) * 3;
 		this.text = text;
 		
@@ -126,6 +126,7 @@ class node_t
 		this.signals = [];
 		
 		let rad = this.height / 8;
+		this.io_radius = rad;
 		this.inputs = [];
 		for(let i = 0; i < 2; ++i)
 		{
@@ -153,9 +154,12 @@ class node_t
 	add_signal(type)
 	{
 		if(type == "input")
-		{				
+		{
+			let sig = new signal(this, "input", this.x,this.y+(this.signals.length)*this.io_radius*3-this.io_radius/2,this.io_radius);
+			this.height+=(this.signals.length)*this.io_radius*3-this.io_radius/2;
+			this.inputs.push(sig);
 			this.signals.push(
-				new signal(this, "input", this.x,this.y+(this.signals.length+1)*rad*3-rad/2,rad)
+				sig
 			);
 		}
 	}
@@ -229,7 +233,7 @@ class node_t
 		ctx.strokeStyle="#333";
 		ctx.roundRect(this.x,this.y,this.width,this.height,rad).stroke();
 		ctx.restore();
-		ctx.fillText(this.text, this.x + this.width * (0.25+0.125), this.y + this.height - this.height * (1/3));
+		ctx.fillText(this.text, this.x + this.width * (0.25), this.y + this.height - this.height * (1/3));
 		
 		for(let inp in this.signals)
 		{
@@ -249,11 +253,20 @@ class node_t
 	}
 };
 
+class node_rand extends node_t
+{
+	constructor(x,y)
+	{
+		super(x,y,"random");
+		this.output.state = Math.random();
+	}
+};
+
 class node_0 extends node_t
 {
 	constructor(x,y)
 	{
-		super(x,y,"false");
+		super(x,y,"0");
 		this.output.state = 0;
 	}
 };
@@ -262,21 +275,64 @@ class node_1 extends node_t
 {
 	constructor(x,y)
 	{
-		super(x,y,"true");
+		super(x,y,"1");
 		this.output.state = 1;
 	}
 };
 
-class node_and extends node_t
+class node_color extends node_t
 {
 	constructor(x,y)
 	{
-		super(x,y,"and");
+		super(x,y,"color");
+		this.add_signal("input");
+		this.color = "rgb(255,255,255)";
+	}
+	
+	draw(selected)
+	{
+		
+		let rad=10;
+		ctx.save();
+		
+		ctx.save();
+			//ctx.fillStyle="#aaa";
+			let angle = 90 * (Math.PI / 180);
+			let f = 0.9;
+			let grd = ctx.createLinearGradient(this.x,this.y+this.height*f,this.x+Math.cos(angle)*this.width,this.y+Math.sin(angle)*this.height);
+			grd.addColorStop(0, this.color);
+			grd.addColorStop(1, "#aaa");
+
+			// Fill with gradient
+			ctx.fillStyle = grd;
+			ctx.roundRect(this.x,this.y,this.width,this.height,rad).fill();
+			//ctx.fillStyle="#ccc";
+			//ctx.roundRect(this.x,this.y,this.width,this.height*f,rad).fill();
+		ctx.restore();
+		
+		if(selected)
+			ctx.lineWidth = 4;
+		ctx.strokeStyle="#333";
+		ctx.roundRect(this.x,this.y,this.width,this.height,rad).stroke();
+		ctx.restore();
+		ctx.fillText(this.text, this.x + this.width * (0.25), this.y + this.height - this.height * (1/3));
+		
+		for(let inp in this.signals)
+		{
+			let selected = this.signals[inp].in_bounds(mouse_x,mouse_y);
+			this.signals[inp].draw(selected || selected_signal == this.signals[inp]);
+		}
 	}
 	
 	value_changed()
 	{
-		this.output.state = (this.inputs[0].get_state() > 0 && this.inputs[1].get_state() > 0) ? 1 : 0;
+		let r = this.inputs[0].get_state() * 255;
+		let g = this.inputs[1].get_state() * 255;
+		let b = this.inputs[2].get_state() * 255;
+		if(!isNaN(r) && !isNaN(g) && !isNaN(b))
+		{
+			this.color = "rgb("+r+","+g+","+b+")";
+		}
 	}
 };
 
@@ -384,19 +440,16 @@ window.onkeydown=(ev)=>
 		break;
 		
 		case "1":
-		nodes.push(new node_0(mouse_x,mouse_y));
+		nodes.push(new node_rand(mouse_x,mouse_y));
 		break;
 		case "2":
-		nodes.push(new node_1(mouse_x,mouse_y));
+		nodes.push(new node_color(mouse_x,mouse_y));
 		break;
 		case "3":
-		nodes.push(new node_and(mouse_x,mouse_y));
+		nodes.push(new node_0(mouse_x,mouse_y));
 		break;
 		case "4":
-		nodes.push(new node_or(mouse_x,mouse_y));
-		break;
-		case "5":
-		nodes.push(new node_xor(mouse_x,mouse_y));
+		nodes.push(new node_1(mouse_x,mouse_y));
 		break;
 	}
 };
@@ -411,7 +464,7 @@ window.onclick=(ev)=>
 		{
 			if(selected_signal != null && inp != selected_signal && inp.type != selected_signal.type)
 			{			
-				if(selected_signal.link!=null)
+				if(selected_signal.link!=null&&selected_signal.type!="output")
 					selected_signal.link.link=null;
 				if(inp.link!=null&&inp.link.link!=null)
 					inp.link.link=null;
