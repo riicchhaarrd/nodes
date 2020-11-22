@@ -414,6 +414,8 @@ class vec3
 	
 	toString()
 	{
+		if(typeof this.x.toFixed != "function")
+			return "?";
 		return "("+this.x.toFixed(2)+","+this.y.toFixed(2)+","+this.z.toFixed(2)+")";
 	}
 };
