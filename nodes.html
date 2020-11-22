@@ -1,0 +1,214 @@
+
+<style>html,body{margin:0;}</style>
+<canvas></canvas>
+<script>
+(function()
+{
+var canvas = document.getElementsByTagName("canvas")[0];
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+var ctx = canvas.getContext("2d");
+
+let nodes = [];
+
+class signal
+{
+    constructor(type,x,y,rad)
+    {
+        this.type=type;
+        this.x=x;
+        this.y=y;
+        this.radius = rad;
+        this.state = Math.random()>0.5?1:0;
+        this.link = null;
+    }
+    
+    in_bounds(x, y)
+    {
+        let dx = x-this.x;
+        let dy = y-this.y;
+        let dist = Math.sqrt(dx*dx+dy*dy);
+        return dist < this.radius;
+    }
+    
+    get_state()
+    {
+        if(this.type=="input")
+        {
+            if(this.link==null)
+                return "?";
+            return this.link.get_state();
+        }
+        return this.state;
+    }
+    
+    draw(selected)
+    {
+        ctx.save();
+        ctx.strokeStyle=this.type=="input"?"green":"red";
+        ctx.fillStyle=this.type=="input"?"green":"red";
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.radius, 0, 2 * Math.PI);
+        if(selected)
+        ctx.fill();
+        else
+        ctx.stroke();
+        
+        ctx.fillText(this.get_state(), this.x, this.y);
+        
+        if(this.link != null)
+        {
+            ctx.beginPath();
+            ctx.moveTo(this.x,this.y);
+            ctx.lineTo(this.link.x,this.link.y);
+            ctx.closePath();
+            ctx.stroke();
+        }
+        ctx.restore();
+    }
+};
+
+//todo:
+//signal_1 extends signal signal_0 extends signal, signal_and_gate extends signal
+
+var selected_signal = null;
+
+class node_t
+{
+    constructor(x,y,text)
+    {
+        this.x = x;
+        this.y = y;
+        
+        ctx.font="24px arial";
+        let m = ctx.measureText(text);
+        this.width = m.width * 2;
+        this.height = (m.actualBoundingBoxAscent + m.actualBoundingBoxDescent) * 2;
+        this.text = text;
+        
+        this.link = null;
+        
+        this.signals = [];
+        
+        let rad = this.height / 8;
+        for(let i = 0; i < 2; ++i)
+        {
+            this.signals.push(
+                new signal("input", this.x+rad*2,this.y+(i+1)*rad*3,rad)
+            );
+        }
+        for(let i = 0; i < 1; ++i)
+        {
+            this.signals.push(
+                new signal("output", this.x+this.width-rad*2,this.y+(i+1)*rad*3,rad)
+            );
+        }
+    }
+    
+    get_selected_signal(x,y)
+    {
+        for(let inp in this.signals)
+        {
+            if(this.signals[inp].in_bounds(x,y))
+                return this.signals[inp];
+        }
+        return null;
+    }
+    
+    draw(selected)
+    {
+        ctx.beginPath();
+        ctx.rect(this.x, this.y, this.width, this.height);
+        ctx.closePath();
+        ctx.stroke();
+        ctx.fillText(this.text, this.x + this.width * 0.25, this.y + this.height - this.height * 0.25);
+        
+        for(let inp in this.signals)
+        {
+            let selected = this.signals[inp].in_bounds(mouse_x,mouse_y);
+            this.signals[inp].draw(selected || selected_signal == this.signals[inp]);
+        }
+    }
+    
+    in_bounds(x, y)
+    {
+        return x >= this.x && x <= this.x + this.width && y >= this.y && y <= this.y + this.height;
+    }
+}
+
+var mouse_x=0,mouse_y=0;
+
+window.onmousemove=(ev)=>{mouse_x = ev.clientX; mouse_y = ev.clientY;};
+
+function get_selected_node()
+{
+    for(let itx in nodes)
+    {
+        let node = nodes[itx];
+        if(node.in_bounds(mouse_x,mouse_y))
+            return node;
+    }
+    return null;
+}
+
+let selected_node = null;
+
+window.onclick=(ev)=>
+{
+    let node = get_selected_node();
+    if(node == null)
+        nodes.push(new node_t(ev.clientX, ev.clientY, "test"));
+    else
+    {
+        selected_node = node;
+        selected_signal = node.get_selected_signal(ev.clientX,ev.clientY);
+    }
+};
+
+window.oncontextmenu=(ev)=>
+{
+    if(selected_node==null)return false;
+    let node = get_selected_node();
+    if(node != null)
+    {
+        inp = node.get_selected_signal(ev.clientX,ev.clientY);
+        if(selected_signal!=null)
+        {
+            if(inp==null||selected_signal.type!=inp.type)
+            {
+            if(selected_signal.link!=null)
+            selected_signal.link.link=null;
+            if(inp.link!=null&&inp.link.link!=null)
+            inp.link.link=null;
+            selected_signal.link = inp;
+            inp.link=selected_signal;
+            }
+        }
+    }
+    return false;
+};
+
+function draw()
+{
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    for(let itx in nodes)
+    {
+        let node = nodes[itx];
+        let selected = node.in_bounds(mouse_x,mouse_y);
+        node.draw(selected || node == selected_node);
+        
+        if(node.link != null)
+        {
+            ctx.beginPath();
+            ctx.moveTo(node.x,node.y);
+            ctx.lineTo(node.link.x,node.link.y);
+            ctx.closePath();
+            ctx.stroke();
+        }
+    }
+    window.requestAnimationFrame(draw);
+}
+
+window.requestAnimationFrame(draw);
+})();
+</script>
