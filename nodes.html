@@ -1,28 +1,25 @@
+<script src="vue.min.js" type="text/javascript"></script>
 <style>html,body{margin:0;}</style>
+<div id="app">
 <canvas></canvas>
+<div id="menu" style="position:fixed;left:0;top:0;display:none;">
+<div v-for="(n, i) in registered_nodes"><button @click="add_node(n)">{{ n.get_label() }}</button></div>
+</div>
+</div>
 <script>
 (function()
 {
-var canvas = document.getElementsByTagName("canvas")[0];
-canvas.width = window.innerWidth;
-canvas.height = window.innerHeight;
-var ctx = canvas.getContext("2d");
+var ctx = null;
+var canvas = null;
+var dummy=true;
+var nodes = [];
+var node_candidate = null;
+var signal_candidate = null;
+var moving = false;
+var selected_node = null;
+var selected_signal = null;
 
-let nodes = [];
-
-//https://stackoverflow.com/questions/1255512/how-to-draw-a-rounded-rectangle-on-html-canvas
-CanvasRenderingContext2D.prototype.roundRect = function (x, y, w, h, r) {
-  if (w < 2 * r) r = w / 2;
-  if (h < 2 * r) r = h / 2;
-  this.beginPath();
-  this.moveTo(x+r, y);
-  this.arcTo(x+w, y,   x+w, y+h, r);
-  this.arcTo(x+w, y+h, x,   y+h, r);
-  this.arcTo(x,   y+h, x,   y,   r);
-  this.arcTo(x,   y,   x+w, y,   r);
-  this.closePath();
-  return this;
-}
+var mouse_x=0,mouse_y=0;
 
 class signal
 {
@@ -51,8 +48,8 @@ class signal
 	
 	in_bounds(x, y)
 	{
-		let dx = x-this.x;
-		let dy = y-this.y;
+		let dx = x-(this.x+this.node.x);
+		let dy = y-(this.y+this.node.y);
 		let dist = Math.sqrt(dx*dx+dy*dy);
 		return dist < this.radius*2;
 	}
@@ -83,12 +80,12 @@ class signal
 		this.y+=dy;
 	}
 	
-	draw(selected)
+	draw(abs_x, abs_y, selected)
 	{
 		ctx.save();
 		ctx.fillStyle="#fff";
 		ctx.beginPath();
-		ctx.arc(this.x, this.y, this.radius, 0, 2 * Math.PI);
+		ctx.arc(abs_x + this.x, abs_y + this.y, this.radius, 0, 2 * Math.PI);
 		ctx.fill();
 		ctx.restore();
 		ctx.save();
@@ -96,24 +93,24 @@ class signal
 		ctx.strokeStyle=this.type=="input"?"green":"red";
 		ctx.fillStyle=this.type=="input"?"green":"red";
 		ctx.beginPath();
-		ctx.arc(this.x, this.y, this.radius, 0, 2 * Math.PI);
+		ctx.arc(abs_x + this.x, abs_y + this.y, this.radius, 0, 2 * Math.PI);
 		if(selected)
 		ctx.fill();
 		else
 		ctx.stroke();
 		
-		ctx.fillText(this.get_state_text(), this.x + 10, this.y);
+		ctx.fillText(this.get_state_text(), abs_x + this.x + 10, abs_y + this.y);
 		
 		
 		if(this.link != null)
 		{
 			ctx.beginPath();
-			ctx.moveTo(this.x,this.y);
-			let dx = this.link.x;
-			let dy = this.link.y;
+			ctx.moveTo(abs_x + this.x,abs_y + this.y);
+			let dx = this.link.x + this.link.node.x;
+			let dy = this.link.y + this.link.node.y;
 			ctx.bezierCurveTo(
-				(this.x + dx) / 2, this.y,
-				(this.x + dx) / 2, dy,
+				(abs_x + this.x + dx) / 2, abs_y + this.y,
+				(abs_x + this.x + dx) / 2, dy,
 				dx,dy
 			);
 			//ctx.lineTo(this.link.x,this.link.y);
@@ -132,17 +129,28 @@ class signal_proxy extends signal
 	}
 };
 
-//todo:
-//signal_1 extends signal signal_0 extends signal, signal_and_gate extends signal
-
-var selected_signal = null;
-
 class node_t
 {
-	constructor(x,y,text)
+	set_position(x,y)
 	{
-		this.x = x;
-		this.y = y;
+		this.x=x;
+		this.y=y;
+	}
+	
+	get_label()
+	{
+		return this.text;
+		//this.output.state.constructor.name
+	}
+	
+	set_initial_value()
+	{
+	}
+
+	constructor(text)
+	{
+		this.x = 0;
+		this.y = 0;
 		
 		this.color = "rgb(255,255,255)";
 		ctx.font="24px arial";
@@ -160,7 +168,7 @@ class node_t
 		this.inputs = [];
 		for(let i = 0; i < 2; ++i)
 		{
-			let inp = new signal(this, "input", this.x,this.y+(i+1)*rad*3-rad/2,rad);
+			let inp = new signal(this, "input", 0,(i+1)*rad*3-rad/2,rad);
 			this.inputs.push(inp);
 			
 			this.signals.push(
@@ -168,7 +176,7 @@ class node_t
 			);
 		}
 		this.outputs=[];
-		this.output = new signal(this, "output", this.x+this.width,this.y+this.height/2-rad/2,rad);
+		this.output = new signal(this, "output", this.width,this.height/2-rad/2,rad);
 		for(let i = 0; i < 1; ++i)
 		{
 			this.signals.push(
@@ -208,7 +216,7 @@ class node_t
 	{
 		if(type == "input")
 		{
-			let sig = new signal(this, "input", this.x,this.y+(this.inputs.length+1)*this.io_radius*3-this.io_radius/2,this.io_radius);
+			let sig = new signal(this, "input", 0,(this.inputs.length+1)*this.io_radius*3-this.io_radius/2,this.io_radius);
 			this.height+=(this.signals.length)*this.io_radius*3-this.io_radius/2;
 			this.inputs.push(sig);
 			this.signals.push(
@@ -216,7 +224,7 @@ class node_t
 			);
 		} else if(type == "output")
 		{
-			let sig = new signal(this, "output", this.x+this.width,this.y+(this.outputs.length+1)*this.io_radius*3-this.io_radius/2,this.io_radius);
+			let sig = new signal(this, "output", this.width,(this.outputs.length+1)*this.io_radius*3-this.io_radius/2,this.io_radius);
 			this.signals.push(
 				sig
 			);
@@ -231,11 +239,12 @@ class node_t
 
 		this.x += dx;
 		this.y += dy;
-		
+		/*
 		for(let inp in this.signals)
 		{
 			this.signals[inp].move_relative(dx,dy);
 		}
+		*/
 	}
 	
 	remove()
@@ -302,7 +311,7 @@ class node_t
 		for(let inp in this.signals)
 		{
 			let selected = this.signals[inp].in_bounds(mouse_x,mouse_y);
-			this.signals[inp].draw(selected || selected_signal == this.signals[inp]);
+			this.signals[inp].draw(this.x,this.y,selected || selected_signal == this.signals[inp]);
 		}
 	}
 	
@@ -319,9 +328,9 @@ class node_t
 
 class node_rand extends node_t
 {
-	constructor(x,y)
+	constructor()
 	{
-		super(x,y,"random");
+		super("random");
 		this.output.set_state(Math.random());
 		this.remove_all_inputs();
 	}
@@ -331,41 +340,65 @@ class node_0 extends node_t
 {
 	constructor(x,y)
 	{
-		super(x,y,"0");
-		this.output.set_state(0);
+		super("constant 0");
 		this.remove_all_inputs();
+	}
+	
+	set_initial_value()
+	{
+		this.output.set_state(0);
 	}
 };
 
 class node_1 extends node_t
 {
-	constructor(x,y)
+	constructor()
 	{
-		super(x,y,"1");
+		super("constant 1");
 		this.output.set_state(1);
 		this.remove_all_inputs();
 	}
+	
+	set_initial_value()
+	{
+		this.output.set_state(1);
+	}
 };
+
+function prompt_proxy()
+{
+	if(dummy)
+		return;
+	return prompt();
+}
 
 class node_constant extends node_t
 {
-	constructor(x,y)
+	constructor()
 	{
-		super(x,y,"constant");
-		this.output.set_state(parseFloat(prompt()));
+		super("constant");
 		this.remove_all_inputs();
+	}
+	
+	set_initial_value()
+	{
+		this.output.set_state(parseFloat(prompt_proxy()));
 	}
 };
 
 class node_vec3 extends node_t
 {
-	constructor(x,y)
+	constructor()
 	{
-		super(x,y,"vec3");
-		this.output.set_state(
-			new vec3(parseFloat(prompt()),parseFloat(prompt()),parseFloat(prompt()))
-		);
+		super("vec3");
 		this.remove_all_inputs();
+	}
+	
+	set_initial_value()
+	{
+		this.output.set_state(
+			new vec3(parseFloat(prompt_proxy()),parseFloat(prompt_proxy()),parseFloat(prompt_proxy()))
+		);
 	}
 };
 
@@ -386,9 +419,9 @@ class vec3
 
 class node_mathop extends node_t
 {
-	constructor(name, op, x, y)
+	constructor(name, op)
 	{
-		super(x,y,name);
+		super(name);
 		this.op = op;
 	}
 	
@@ -424,9 +457,9 @@ class node_mathop extends node_t
 
 class node_normalize extends node_t
 {
-	constructor(x,y)
+	constructor()
 	{
-		super(x,y,"normalize");
+		super("normalize");
 		this.remove_all_inputs();
 		this.add_signal("input");
 	}
@@ -450,9 +483,9 @@ class node_normalize extends node_t
 
 class node_extract_vec3 extends node_t
 {
-	constructor(x,y)
+	constructor()
 	{
-		super(x,y,"vec3 to 3-floats");
+		super("vec3 to 3-floats");
 		this.remove_all_inputs();
 		this.remove_all_outputs();
 		this.add_signal("input");
@@ -482,9 +515,9 @@ class node_extract_vec3 extends node_t
 
 class node_color extends node_t
 {
-	constructor(x,y)
+	constructor()
 	{
-		super(x,y,"color");
+		super("color");
 		this.add_signal("input");
 	}
 	
@@ -501,35 +534,45 @@ class node_color extends node_t
 	}
 };
 
-class node_or extends node_t
-{
-	constructor(x,y)
+var app = new Vue({
+	el: "#app",
+	data: function()
 	{
-		super(x,y,"or");
-	}
-	
-	value_changed()
+		return {
+			registered_nodes: []
+		};
+	},
+	mounted: function()
 	{
-		this.output.set_state((this.inputs[0].get_state() > 0 || this.inputs[1].get_state() > 0) ? 1 : 0);
-	}
-};
-
-class node_xor extends node_t
-{
-	constructor(x,y)
+	},
+	methods:
 	{
-		super(x,y,"xor");
+		add_node: function(n)
+		{
+			this.closeMenu();
+			let o = Object.create(n);
+			o.set_position(mouse_x, mouse_y);
+			o.set_initial_value();
+			nodes.push(o);
+		},
+		register_node: function(n)
+		{
+			this.registered_nodes.push(n);
+		},
+		closeMenu: function()
+		{
+			let menu = document.getElementById("menu");
+			menu.style.display="none";
+		},
+		openMenu: function(ev)
+		{
+			let menu = document.getElementById("menu");
+			menu.style.left = ev.clientX;
+			menu.style.top = ev.clientY;
+			menu.style.display="block";
+		}
 	}
-	
-	value_changed()
-	{
-		let s1 = this.inputs[0].get_state();
-		let s2 = this.inputs[1].get_state();
-		this.output.set_state( s1 ^ s2 );
-	}
-};
-
-var mouse_x=0,mouse_y=0;
+});
 
 function get_selected_node()
 {
@@ -542,133 +585,9 @@ function get_selected_node()
 	return null;
 }
 
-let node_candidate = null;
-let signal_candidate = null;
-let moving = false;
-
-let selected_node = null;
-
-window.onmouseup=(ev)=>
-{
-	moving=false;
-	selected_node=null;
-};
-
-window.oncontextmenu=(ev)=>{return false;}
-
-window.onmousedown=(ev)=>
-{
-	if(ev.buttons!=1)
-	{
-		let node_index = null;
-		for(let itx in nodes)
-		{
-			let node = nodes[itx];
-			if(node.in_bounds(ev.clientX,ev.clientY))
-			{
-				node_index = itx;
-				break;
-			}
-		}
-		if(node_index != null)
-		{
-			nodes[node_index].remove();
-			nodes.splice(node_index, 1);
-		}
-		return false;
-	}
-	let node = get_selected_node();
-	selected_node=node;
-	if(node!=null)
-	{
-		let sig = node.get_selected_signal(mouse_x, mouse_y);
-		if(sig == null)
-			moving=true;
-	}
-};
-
-window.onmousemove=(ev)=>
-{
-	mouse_x = ev.clientX; mouse_y = ev.clientY;
-	
-	//get current elements under mouse
-
-	node_candidate = get_selected_node();
-};
-
-window.onkeydown=(ev)=>
-{
-	switch(ev.key)
-	{
-		case " ":
-		nodes.push(new node_t(mouse_x,mouse_y, "test"));
-		break;
-		
-		case "1":
-		nodes.push(new node_rand(mouse_x,mouse_y));
-		break;
-		case "2":
-		nodes.push(new node_color(mouse_x,mouse_y));
-		break;
-		case "3":
-		nodes.push(new node_0(mouse_x,mouse_y));
-		break;
-		case "4":
-		nodes.push(new node_1(mouse_x,mouse_y));
-		break;
-		case "5":
-		nodes.push(new node_mathop("multiply", "*", mouse_x,mouse_y));
-		break;
-		case "6":
-		nodes.push(new node_mathop("divide", "/", mouse_x,mouse_y));
-		break;
-		case "7":
-		nodes.push(new node_mathop("add", "+", mouse_x,mouse_y));
-		break;
-		case "8":
-		nodes.push(new node_mathop("subtract", "-", mouse_x,mouse_y));
-		break;
-		case "9":
-		nodes.push(new node_normalize(mouse_x,mouse_y));
-		break;
-		case "a":
-		nodes.push(new node_extract_vec3(mouse_x,mouse_y));
-		break;
-		case "b":
-		nodes.push(new node_constant(mouse_x,mouse_y));
-		break;
-		case "c":
-		nodes.push(new node_vec3(mouse_x,mouse_y));
-		break;
-	}
-};
-
-window.onclick=(ev)=>
-{
-	let node = get_selected_node();
-	if(node!=null)
-	{
-		let inp = node.get_selected_signal(ev.clientX, ev.clientY);
-		if(inp != null)
-		{
-			if(selected_signal != null && inp != selected_signal && inp.type != selected_signal.type)
-			{			
-				if(selected_signal.link!=null&&selected_signal.type!="output")
-					selected_signal.link.link=null;
-				if(inp.link!=null&&inp.link.link!=null)
-					inp.link.link=null;
-				selected_signal.link = inp;
-				inp.link=selected_signal;
-				selected_signal=null;
-				node.value_changed();
-			} else
-				selected_signal = inp;
-		}
-	}
-};
-
 function draw()
 {
+	if(ctx==null)return;
 	if(selected_node != null && moving)
 	{
 		selected_node.move_absolute(mouse_x,mouse_y);
@@ -692,6 +611,127 @@ function draw()
 	window.requestAnimationFrame(draw);
 }
 
-window.requestAnimationFrame(draw);
+function init()
+{
+	//https://stackoverflow.com/questions/1255512/how-to-draw-a-rounded-rectangle-on-html-canvas
+	CanvasRenderingContext2D.prototype.roundRect = function (x, y, w, h, r) {
+	  if (w < 2 * r) r = w / 2;
+	  if (h < 2 * r) r = h / 2;
+	  this.beginPath();
+	  this.moveTo(x+r, y);
+	  this.arcTo(x+w, y,   x+w, y+h, r);
+	  this.arcTo(x+w, y+h, x,   y+h, r);
+	  this.arcTo(x,   y+h, x,   y,   r);
+	  this.arcTo(x,   y,   x+w, y,   r);
+	  this.closePath();
+	  return this;
+	}
+	canvas = document.getElementsByTagName("canvas")[0];
+	canvas.width = window.innerWidth;
+	canvas.height = window.innerHeight;
+	ctx = canvas.getContext("2d");
+	
+	window.onmouseup=(ev)=>
+	{
+		moving=false;
+		selected_node=null;
+	};
+
+	window.oncontextmenu=(ev)=>
+	{
+		app.openMenu(ev);
+		return false;
+	}
+
+	window.onmousedown=(ev)=>
+	{
+		if(ev.buttons!=1)
+		{
+			let node_index = null;
+			for(let itx in nodes)
+			{
+				let node = nodes[itx];
+				if(node.in_bounds(ev.clientX,ev.clientY))
+				{
+					node_index = itx;
+					break;
+				}
+			}
+			if(node_index != null)
+			{
+				nodes[node_index].remove();
+				nodes.splice(node_index, 1);
+			}
+			return false;
+		}
+		let node = get_selected_node();
+		selected_node=node;
+		if(node!=null)
+		{
+			let sig = node.get_selected_signal(mouse_x, mouse_y);
+			if(sig == null)
+				moving=true;
+		}
+	};
+
+	window.onmousemove=(ev)=>
+	{
+		mouse_x = ev.clientX; mouse_y = ev.clientY;
+		
+		//get current elements under mouse
+
+		node_candidate = get_selected_node();
+	};
+
+	window.onkeydown=(ev)=>
+	{
+	};
+
+	window.onclick=(ev)=>
+	{
+		let node = get_selected_node();
+		if(node!=null)
+		{
+			let inp = node.get_selected_signal(ev.clientX, ev.clientY);
+			if(inp != null)
+			{
+				if(selected_signal != null && inp != selected_signal && inp.type != selected_signal.type)
+				{			
+					if(selected_signal.link!=null&&selected_signal.type!="output")
+						selected_signal.link.link=null;
+					if(inp.link!=null&&inp.link.link!=null)
+						inp.link.link=null;
+					selected_signal.link = inp;
+					inp.link=selected_signal;
+					selected_signal=null;
+					node.value_changed();
+				} else
+					selected_signal = inp;
+			}
+		}
+	};
+	
+	app.register_node(new node_t("test"));
+	app.register_node(new node_rand());
+	app.register_node(new node_color());
+	app.register_node(new node_0());
+	app.register_node(new node_1());
+	app.register_node(new node_mathop("multiply", "*"));
+	app.register_node(new node_mathop("divide", "/", ));
+	app.register_node(new node_mathop("add", "+", ));
+	app.register_node(new node_mathop("subtract", "-", ));
+	app.register_node(new node_normalize());
+	app.register_node(new node_extract_vec3());
+	app.register_node(new node_constant());
+	app.register_node(new node_vec3());
+}
+
+window.requestAnimationFrame(()=>
+{
+	//ctx = document.getElementsByTagName("canvas")[0].getContext("2d");
+	init();
+	window.requestAnimationFrame(draw);
+	dummy=false;
+});
 })();
 </script>
