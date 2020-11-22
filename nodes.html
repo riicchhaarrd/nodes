@@ -455,6 +455,11 @@ class node_mathop extends node_t
 	}
 };
 
+class node_mathop_mul extends node_mathop { constructor() { super("multiply", "*"); } };
+class node_mathop_sub extends node_mathop { constructor() { super("subtract", "-"); } };
+class node_mathop_div extends node_mathop { constructor() { super("divide", "/"); } };
+class node_mathop_add extends node_mathop { constructor() { super("add", "+"); } };
+
 class node_normalize extends node_t
 {
 	constructor()
@@ -550,7 +555,7 @@ var app = new Vue({
 		add_node: function(n)
 		{
 			this.closeMenu();
-			let o = Object.create(n);
+			let o = new (n.constructor)();
 			o.set_position(mouse_x, mouse_y);
 			o.set_initial_value();
 			nodes.push(o);
@@ -711,15 +716,14 @@ function init()
 		}
 	};
 	
-	app.register_node(new node_t("test"));
 	app.register_node(new node_rand());
 	app.register_node(new node_color());
 	app.register_node(new node_0());
 	app.register_node(new node_1());
-	app.register_node(new node_mathop("multiply", "*"));
-	app.register_node(new node_mathop("divide", "/", ));
-	app.register_node(new node_mathop("add", "+", ));
-	app.register_node(new node_mathop("subtract", "-", ));
+	app.register_node(new node_mathop_mul());
+	app.register_node(new node_mathop_div());
+	app.register_node(new node_mathop_add());
+	app.register_node(new node_mathop_sub());
 	app.register_node(new node_normalize());
 	app.register_node(new node_extract_vec3());
 	app.register_node(new node_constant());
