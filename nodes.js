@@ -2,6 +2,7 @@ export var ctx = null;
 export var canvas = null;
 export var dummy=true;
 export var nodes = [];
+export var main_node = null;
 export var node_candidate = null;
 export var signal_candidate = null;
 export var moving = false;
@@ -14,8 +15,18 @@ export var mouse_y = 0;
 import signal_proxy from "./signal_proxy.js";
 import node_0 from "./node_0.js";
 import node_1 from "./node_1.js";
+import node_text from "./node_text.js";
 import node_color from "./node_color.js";
 import node_constant from "./node_constant.js";
+import node_entry from "./node_entry.js";
+import node_cast_vec3 from "./node_cast_vec3.js";
+import node_print from "./node_print.js";
+import node_printbold from "./node_printbold.js";
+import node_repeat from "./node_repeat.js";
+import node_branch from "./node_branch.js";
+import node_delay from "./node_delay.js";
+import node_exit from "./node_exit.js";
+import node_color2 from "./node_color2.js";
 import node_extract_vec3 from "./node_extract_vec3.js";
 import {
     node_mathop,
@@ -141,9 +152,38 @@ function init()
 
 	window.oncontextmenu=(ev)=>
 	{
-		app.openMenu(ev);
 		return false;
 	}
+	
+	window.onkeyup=(ev)=>
+	{
+		if(ev.key==" ")
+		{
+			app.openMenu({
+				clientX: mouse_x,
+				clientY: mouse_y
+			});
+		} else if(ev.key == "q")
+		{
+			gsc="main()\n{";
+			//walk backwards from main_node
+			let cur = main_node;
+			for(;;)
+			{
+				console.log(cur);
+				if(typeof cur.get_script==="function")
+				gsc+=cur.get_script()+"\n";
+				if(cur.outputs.length==0)
+					break;
+				if(cur.outputs[0].link==null)
+					break;
+				cur = cur.outputs[0].link.node;
+			}
+			gsc+="\n}";
+			console.log(gsc);
+		}
+		return false;
+	};
 
 	window.onmousedown=(ev)=>
 	{
@@ -226,6 +266,18 @@ function init()
 	app.register_node(new node_extract_vec3());
 	app.register_node(new node_constant());
 	app.register_node(new node_vec3());
+	
+	app.register_node(new node_text());
+	app.register_node(new node_color2());
+	app.register_node(new node_cast_vec3());
+	app.register_node(new node_printbold());
+	app.register_node(new node_print());
+	app.register_node(new node_delay());
+	app.register_node(new node_exit());
+	app.register_node(new node_branch());
+	app.register_node(new node_repeat());
+	main_node = new node_entry();
+	nodes.push(main_node);
 }
 
 window.requestAnimationFrame(()=>

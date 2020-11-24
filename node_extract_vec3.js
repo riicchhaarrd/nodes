@@ -13,7 +13,7 @@ export default class node_extract_vec3 extends node_t
 		this.add_signal("output");
 		this.add_signal("output");
 		
-		this.output = new signal_proxy(this,"output",0,0,0);
+		this.output = new signal_proxy(this,"output");
 	}
 	
 	value_changed()

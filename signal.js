@@ -1,9 +1,10 @@
 import {ctx} from "./nodes.js";
 
 export default class signal {
-	constructor(node,type,x,y,rad)
+	constructor(node,label,type,x,y,rad)
 	{
 		this.node=node;
+		this.label=label;
 		this.type=type;
 		this.x=x;
 		this.y=y;
@@ -79,6 +80,10 @@ export default class signal {
 		ctx.stroke();
 		
 		ctx.fillText(this.get_state_text(), abs_x + this.x + 10, abs_y + this.y);
+		
+		ctx.save();
+		ctx.fillText(this.label, abs_x+this.x+25,abs_y+this.y);
+		ctx.restore();
 		
 		
 		if(this.link != null)

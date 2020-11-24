@@ -45,7 +45,7 @@ export default class node_t
 		this.inputs = [];
 		for(let i = 0; i < 2; ++i)
 		{
-			let inp = new signal(this, "input", 0,(i+1)*rad*3-rad/2,rad);
+			let inp = new signal(this, "", "input", 0,(i+1)*rad*3-rad/2,rad);
 			this.inputs.push(inp);
 			
 			this.signals.push(
@@ -53,7 +53,7 @@ export default class node_t
 			);
 		}
 		this.outputs=[];
-		this.output = new signal(this, "output", this.width,this.height/2-rad/2,rad);
+		this.output = new signal(this, "", "output", this.width,this.height/2-rad/2,rad);
 		for(let i = 0; i < 1; ++i)
 		{
 			this.signals.push(
@@ -89,11 +89,13 @@ export default class node_t
 	{
 	}
 	
-	add_signal(type)
+	add_signal(type, label)
 	{
+		if(label==null)
+			label="";
 		if(type == "input")
 		{
-			let sig = new signal(this, "input", 0,(this.inputs.length+1)*this.io_radius*3-this.io_radius/2,this.io_radius);
+			let sig = new signal(this, label, "input", 0,(this.inputs.length+1)*this.io_radius*3-this.io_radius/2,this.io_radius);
 			this.height+=(this.signals.length)*this.io_radius*3-this.io_radius/2;
 			this.inputs.push(sig);
 			this.signals.push(
@@ -101,7 +103,8 @@ export default class node_t
 			);
 		} else if(type == "output")
 		{
-			let sig = new signal(this, "output", this.width,(this.outputs.length+1)*this.io_radius*3-this.io_radius/2,this.io_radius);
+			let sig = new signal(this, label, "output", this.width,(this.outputs.length+1)*this.io_radius*3-this.io_radius/2,this.io_radius);
+			this.output = sig;
 			this.signals.push(
 				sig
 			);
