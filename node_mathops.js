@@ -1,4 +1,5 @@
 import node_t from "./node_t.js";
+import vec3 from "./vec3.js";
 
 export class node_mathop extends node_t
 {
