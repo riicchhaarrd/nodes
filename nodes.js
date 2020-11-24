@@ -20,9 +20,13 @@ import node_color from "./node_color.js";
 import node_constant from "./node_constant.js";
 import node_entry from "./node_entry.js";
 import node_cast_vec3 from "./node_cast_vec3.js";
+import node_characters from "./node_characters.js";
 import node_print from "./node_print.js";
 import node_printbold from "./node_printbold.js";
 import node_repeat from "./node_repeat.js";
+import node_reverse from "./node_reverse.js";
+import node_sort from "./node_sort.js";
+import node_stringjoin from "./node_stringjoin.js";
 import node_branch from "./node_branch.js";
 import node_delay from "./node_delay.js";
 import node_exit from "./node_exit.js";
@@ -38,6 +42,7 @@ import {
 import node_normalize from "./node_normalize.js";
 import node_rand from "./node_rand.js";
 import node_t from "./node_t.js";
+import node_tally from "./node_tally.js";
 import node_vec3 from "./node_vec3.js";
 
 export function prompt_proxy()
@@ -70,6 +75,7 @@ var app = new Vue({
 				{
 					let inst = eval("new "+list[i]._classname+"()");
 					//console.log(inst.constructor.name);
+					inst.set_initial_value();
 					inst.thaw(list[i]);
 					nodes.push(inst);
 				}
@@ -85,7 +91,7 @@ var app = new Vue({
 			o.set_initial_value();
 			nodes.push(o);
 			
-			this.save_nodes(nodes);
+			this.save_nodes();
 		},
 		save_nodes: function()
 		{
@@ -310,6 +316,13 @@ function init()
 	app.register_node(new node_branch());
 	app.register_node(new node_entry());
 	app.register_node(new node_repeat());
+
+	app.register_node(new node_reverse());
+	app.register_node(new node_sort());
+	app.register_node(new node_stringjoin());
+	app.register_node(new node_tally());
+	app.register_node(new node_characters());
+
 	main_node = new node_entry();
 	if(!app.load_nodes())
 		nodes.push(main_node);
