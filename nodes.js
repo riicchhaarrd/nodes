@@ -165,7 +165,7 @@ function init()
 			});
 		} else if(ev.key == "q")
 		{
-			gsc="main()\n{";
+			let gsc="main()\n{";
 			//walk backwards from main_node
 			let cur = main_node;
 			for(;;)
