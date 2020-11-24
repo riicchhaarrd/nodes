@@ -11,6 +11,15 @@ export default class node_stringjoin extends node_t
 	
 	set_initial_value()
 	{
-		this.output.set_state("todo");
+		this.output.set_state("");
+	}
+	
+	value_changed() {
+		var o;
+		let input = this.inputs[0].get_state();
+		if (input instanceof Array) {
+			o = input.join("");
+		}
+		this.output.set_state(o);
 	}
 };
