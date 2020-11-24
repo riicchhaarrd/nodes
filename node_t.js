@@ -23,6 +23,22 @@ export default class node_t
 	set_initial_value()
 	{
 	}
+	
+	freeze()
+	{
+		return {
+			_classname: this.constructor.name,
+			x: this.x,
+			y: this.y
+		};
+	}
+	
+	thaw(o)
+	{
+		//load data from o
+		this.x = o.x;
+		this.y = o.y;
+	}
 
 	constructor(text)
 	{

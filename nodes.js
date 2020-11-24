@@ -60,6 +60,21 @@ var app = new Vue({
 	},
 	methods:
 	{
+		load_nodes: function()
+		{
+			let tmp = window.localStorage.getItem("nodes");
+			if(tmp != null)
+			{
+				let list = JSON.parse(tmp);
+				for(let i = 0; i < list.length; ++i)
+				{
+					let inst = eval("new "+list[i]._classname+"()");
+					//console.log(inst.constructor.name);
+					inst.thaw(list[i]);
+					nodes.push(inst);
+				}
+			}
+		},
 		add_node: function(n)
 		{
 			this.closeMenu();
@@ -67,6 +82,19 @@ var app = new Vue({
 			o.set_position(mouse_x, mouse_y);
 			o.set_initial_value();
 			nodes.push(o);
+			
+			this.save_nodes(nodes);
+		},
+		save_nodes: function()
+		{
+			let serializable_nodes = [];
+			for(let i = 0; i < nodes.length; ++i)
+			{
+				let n = nodes[i];
+				let serializable_node_data = n.freeze();
+				serializable_nodes.push(serializable_node_data);
+			}
+			window.localStorage.setItem("nodes", JSON.stringify(serializable_nodes));
 		},
 		register_node: function(n)
 		{
@@ -181,6 +209,9 @@ function init()
 			}
 			gsc+="\n}";
 			console.log(gsc);
+		} else if(ev.key == "s")
+		{
+			app.save_nodes();
 		}
 		return false;
 	};
@@ -278,6 +309,8 @@ function init()
 	app.register_node(new node_repeat());
 	main_node = new node_entry();
 	nodes.push(main_node);
+	
+	app.load_nodes();
 }
 
 window.requestAnimationFrame(()=>
