@@ -73,7 +73,9 @@ var app = new Vue({
 					inst.thaw(list[i]);
 					nodes.push(inst);
 				}
+				return true;
 			}
+			return false;
 		},
 		add_node: function(n)
 		{
@@ -306,11 +308,11 @@ function init()
 	app.register_node(new node_delay());
 	app.register_node(new node_exit());
 	app.register_node(new node_branch());
+	app.register_node(new node_entry());
 	app.register_node(new node_repeat());
 	main_node = new node_entry();
-	nodes.push(main_node);
-	
-	app.load_nodes();
+	if(!app.load_nodes())
+		nodes.push(main_node);
 }
 
 window.requestAnimationFrame(()=>
