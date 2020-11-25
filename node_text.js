@@ -14,4 +14,17 @@ class node_text extends node_t
 	{
 		this.output.set_state((prompt_proxy()));
 	}
+
+	freeze()
+	{
+		var frozenfood = super.freeze();
+		frozenfood.text = this.output.get_state();
+		return frozenfood;
+	}
+	
+	thaw(o)
+	{
+		this.output.set_state(o.text);
+		super.thaw(o);
+	}
 };
