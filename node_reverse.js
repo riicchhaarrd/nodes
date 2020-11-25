@@ -20,6 +20,10 @@ export default class node_reverse extends node_t
 		if (typeof input == "string") {
 			o = input.split("").reverse().join("");
 		}
+		if (input instanceof Array) {
+			var copy = input.splice(0);
+			o = copy.reverse();
+		}
 		this.output.set_state(o)
 	}
 };
