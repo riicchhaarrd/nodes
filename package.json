@@ -1,0 +1,27 @@
+{
+  "name": "nodes",
+  "version": "0.0.1",
+  "description": "Quick example of a Node system in Javascript and Canvas.<br>\r Uses Vue to create a context menu, but it's a very small part and easily removed. It's mostly written in pure HTML / JS / Canvas.",
+  "main": "nodes.js",
+  "scripts": {
+    "docs": "jsdoc -c conf-api.json",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/riicchhaarrd/nodes.git"
+  },
+  "keywords": [
+    "nodes"
+  ],
+  "author": "",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/riicchhaarrd/nodes/issues"
+  },
+  "homepage": "https://github.com/riicchhaarrd/nodes#readme",
+  "dependencies": {
+    "@playcanvas/jsdoc-template": "^1.0.13",
+    "jsdoc": "^3.6.6"
+  }
+}
