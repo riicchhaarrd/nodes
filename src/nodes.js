@@ -7,6 +7,9 @@ export var ctx = null;
  */
 export var canvas = null;
 export var dummy = true;
+/**
+ * @type {node_t[]}
+ */
 export var nodes = [];
 /**
  * @type {node_t}
@@ -322,6 +325,11 @@ export function init()
 		}
 	};
 	
+	window.onresize = ev => {
+		canvas.width = window.innerWidth;
+		canvas.height = window.innerHeight;
+	};
+
 	app.register_node(new node_rand());
 	app.register_node(new node_color());
 	app.register_node(new node_0());
