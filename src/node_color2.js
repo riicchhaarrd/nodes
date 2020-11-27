@@ -1,7 +1,14 @@
 import node_t from "./node_t.js";
 
-export default class node_color2 extends node_t
+/**
+ * 
+ */
+
+class node_color2 extends node_t
 {
+	/**
+	 * 
+	 */
 	constructor()
 	{
 		super("color2");
@@ -9,6 +16,9 @@ export default class node_color2 extends node_t
 		this.add_signal("input");
 	}
 	
+	/**
+	 * 
+	 */
 	value_changed()
 	{
 		let v = this.inputs[0].get_state();
@@ -19,3 +29,5 @@ export default class node_color2 extends node_t
 		}
 	}
 };
+
+export default node_color2;

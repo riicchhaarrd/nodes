@@ -1,24 +1,45 @@
 import node_t from "./node_t.js";
 import vec3 from "./vec3.js";
 
-export class node_mathop extends node_t
+/**
+ * 
+ */
+
+class node_mathop extends node_t
 {
+	/**
+	 * 
+	 * @param {string} name 
+	 * @param {string} op 
+	 */
 	constructor(name, op)
 	{
 		super(name);
 		this.op = op;
 	}
 	
+	/**
+	 * 
+	 * @param {number} a 
+	 * @param {number} b 
+	 */
 	eq(a,b)
 	{
 		return eval(a + "" +  this.op + "" + b);
 	}
 	
+	/**
+	 * 
+	 * @param {any} a 
+	 */
 	is_vec3(a)
 	{
 		return typeof a == "object" && a.constructor.name == "vec3";
 	}
 	
+	/**
+	 * 
+	 */
 	value_changed()
 	{
 		let a = this.inputs[0].get_state();
@@ -39,7 +60,30 @@ export class node_mathop extends node_t
 	}
 };
 
-export class node_mathop_mul extends node_mathop { constructor() { super("multiply", "*"); } };
-export class node_mathop_sub extends node_mathop { constructor() { super("subtract", "-"); } };
-export class node_mathop_div extends node_mathop { constructor() { super("divide", "/"); } };
-export class node_mathop_add extends node_mathop { constructor() { super("add", "+"); } };
+/**
+ * 
+ */
+class node_mathop_mul extends node_mathop { constructor() { super("multiply", "*"); } };
+
+/**
+ * 
+ */
+class node_mathop_sub extends node_mathop { constructor() { super("subtract", "-"); } };
+
+/**
+ * 
+ */
+class node_mathop_div extends node_mathop { constructor() { super("divide", "/"); } };
+
+/**
+ * 
+ */
+class node_mathop_add extends node_mathop { constructor() { super("add", "+"); } };
+
+export {
+	node_mathop,
+	node_mathop_mul,
+	node_mathop_sub,
+	node_mathop_div,
+	node_mathop_add
+}

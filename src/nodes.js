@@ -1,7 +1,16 @@
+/**
+ * @type {CanvasRenderingContext2D}
+ */
 export var ctx = null;
+/**
+ * @type {HTMLCanvasElement}
+ */
 export var canvas = null;
-export var dummy=true;
+export var dummy = true;
 export var nodes = [];
+/**
+ * @type {node_t}
+ */
 export var main_node = null;
 export var node_candidate = null;
 export var signal_candidate = null;
@@ -45,12 +54,20 @@ import node_t from "./node_t.js";
 import node_tally from "./node_tally.js";
 import node_vec3 from "./node_vec3.js";
 
+/**
+ * @function
+ */
+
 export function prompt_proxy()
 {
 	if(dummy)
 		return;
 	return prompt();
 }
+
+/**
+ * 
+ */
 
 var app = new Vue({
 	el: "#app",
@@ -123,6 +140,10 @@ var app = new Vue({
 	}
 });
 
+/**
+ * @function
+ */
+
 function get_selected_node()
 {
 	for(let itx in nodes)
@@ -133,6 +154,10 @@ function get_selected_node()
 	}
 	return null;
 }
+
+/**
+ * @function
+ */
 
 function draw()
 {
@@ -159,6 +184,10 @@ function draw()
 	}
 	window.requestAnimationFrame(draw);
 }
+
+/**
+ * @function
+ */
 
 function init()
 {

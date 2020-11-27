@@ -1,6 +1,20 @@
 import {ctx} from "./nodes.js";
+import node_t from "./node_t.js";
 
-export default class signal {
+/**
+ * 
+ */
+
+class signal {
+	/**
+	 * 
+	 * @param {node_t} node 
+	 * @param {string} label 
+	 * @param {string} type 
+	 * @param {number} x 
+	 * @param {number} y 
+	 * @param {number} rad 
+	 */
 	constructor(node,label,type,x,y,rad)
 	{
 		this.node=node;
@@ -13,6 +27,10 @@ export default class signal {
 		this.link = null;
 	}
 	
+	/**
+	 * 
+	 * @param {object} v 
+	 */
 	set_state(v)
 	{
 		this.state = v;
@@ -26,6 +44,11 @@ export default class signal {
 		}
 	}
 	
+	/**
+	 * 
+	 * @param {number} x 
+	 * @param {number} y 
+	 */
 	in_bounds(x, y)
 	{
 		let dx = x-(this.x+this.node.x);
@@ -34,6 +57,9 @@ export default class signal {
 		return dist < this.radius*2;
 	}
 	
+	/**
+	 * 
+	 */
 	get_state()
 	{
 		if(this.type=="input")
@@ -45,6 +71,9 @@ export default class signal {
 		return this.state;
 	}
 	
+	/**
+	 * 
+	 */
 	get_state_text()
 	{
 		if(typeof this.get_state() == "number" && !Number.isSafeInteger(this.get_state()))
@@ -54,12 +83,23 @@ export default class signal {
 		return this.get_state();
 	}
 	
+	/**
+	 * 
+	 * @param {number} dx 
+	 * @param {number} dy 
+	 */
 	move_relative(dx,dy)
 	{
 		this.x+=dx;
 		this.y+=dy;
 	}
 	
+	/**
+	 * 
+	 * @param {number} abs_x 
+	 * @param {number} abs_y 
+	 * @param {boolean} selected 
+	 */
 	draw(abs_x, abs_y, selected)
 	{
 		ctx.save();
@@ -104,3 +144,5 @@ export default class signal {
 		ctx.restore();
 	}
 }
+
+export default signal;

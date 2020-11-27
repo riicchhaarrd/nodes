@@ -1,9 +1,19 @@
 import node_t from "./node_t.js";
 import signal_proxy from "./signal_proxy.js";
 
-export default class node_stmt extends node_t
+/**
+ * 
+ */
+
+class node_stmt extends node_t
 {
-	constructor(n,func_name,parms)
+	/**
+	 * 
+	 * @param {string} n 
+	 * @param {string} func_name 
+	 * @param {object} parms 
+	 */
+	constructor(n, func_name, parms)
 	{
 		super(n);
 		this.func_name = func_name;
@@ -16,10 +26,16 @@ export default class node_stmt extends node_t
 		this.output = new signal_proxy(this,"output",function(){});
 	}
 	
+	/**
+	 * 
+	 */
 	value_changed()
 	{
 	}
 	
+	/**
+	 * 
+	 */
 	get_script()
 	{
 		//first arg is a exec input
@@ -35,3 +51,5 @@ export default class node_stmt extends node_t
 		return this.func_name+"("+args.join(",")+");";
 	}
 };
+
+export default node_stmt;

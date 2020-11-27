@@ -1,8 +1,15 @@
 import node_t from "./node_t.js";
 import signal_proxy from "./signal_proxy.js";
 
-export default class node_extract_vec3 extends node_t
+/**
+ * 
+ */
+
+class node_extract_vec3 extends node_t
 {
+	/**
+	 * 
+	 */
 	constructor()
 	{
 		super("vec3 to 3-floats");
@@ -16,6 +23,9 @@ export default class node_extract_vec3 extends node_t
 		this.output = new signal_proxy(this,"output");
 	}
 	
+	/**
+	 * 
+	 */
 	value_changed()
 	{
 		let a = this.inputs[0].get_state();
@@ -32,3 +42,5 @@ export default class node_extract_vec3 extends node_t
 		}
 	}
 };
+
+export default node_extract_vec3;

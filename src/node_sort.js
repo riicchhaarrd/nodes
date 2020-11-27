@@ -1,7 +1,14 @@
 import node_t from "./node_t.js";
 
-export default class node_sort extends node_t
+/**
+ * 
+ */
+
+class node_sort extends node_t
 {
+	/**
+	 * 
+	 */
 	constructor()
 	{
 		super("Sort");
@@ -9,11 +16,17 @@ export default class node_sort extends node_t
 		this.add_signal("input", "List");
 	}
 	
+	/**
+	 * 
+	 */
 	set_initial_value()
 	{
 		this.output.set_state("");
 	}
 	
+	/**
+	 * 
+	 */
 	value_changed() {
 		var o;
 		let input = this.inputs[0].get_state();
@@ -24,3 +37,5 @@ export default class node_sort extends node_t
 		this.output.set_state(o)
 	}
 };
+
+export default node_sort;

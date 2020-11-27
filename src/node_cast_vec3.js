@@ -1,8 +1,15 @@
 import node_t from "./node_t.js";
 import vec3 from "./vec3.js";
 
-export default class node_cast_vec3 extends node_t
+/**
+ * 
+ */
+
+class node_cast_vec3 extends node_t
 {
+	/**
+	 * 
+	 */
 	constructor()
 	{
 		super("cast vec3");
@@ -10,6 +17,9 @@ export default class node_cast_vec3 extends node_t
 		this.add_signal("input");
 	}
 	
+	/**
+	 * 
+	 */
 	value_changed()
 	{
 		let v = this.inputs[0].get_state();
@@ -19,3 +29,5 @@ export default class node_cast_vec3 extends node_t
 		}
 	}
 };
+
+export default node_cast_vec3;

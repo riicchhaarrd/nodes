@@ -2,7 +2,11 @@ import node_t from "./node_t.js";
 import vec3 from "./vec3.js";
 import {prompt_proxy} from "./nodes.js";
 
-export default class node_vec3 extends node_t
+/**
+ * 
+ */
+
+class node_vec3 extends node_t
 {
 	constructor()
 	{
@@ -17,3 +21,5 @@ export default class node_vec3 extends node_t
 		);
 	}
 };
+
+export default node_vec3;

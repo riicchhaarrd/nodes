@@ -1,7 +1,14 @@
 import node_t from "./node_t.js";
 
-export default class node_tally extends node_t
+/**
+ * 
+ */
+
+class node_tally extends node_t
 {
+	/**
+	 * 
+	 */
 	constructor()
 	{
 		super("Tally");
@@ -9,11 +16,17 @@ export default class node_tally extends node_t
 		this.add_signal("input", "string")
 	}
 	
+	/**
+	 * 
+	 */
 	set_initial_value()
 	{
 		this.output.set_state("");
 	}
 
+	/**
+	 * 
+	 */
 	value_changed() {
 		let input = this.inputs[0].get_state();
 
@@ -36,3 +49,5 @@ export default class node_tally extends node_t
 		}
 	}
 };
+
+export default node_tally;

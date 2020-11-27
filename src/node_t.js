@@ -6,24 +6,44 @@ import {
 } from "./nodes.js";
 import signal from "./signal.js";
 
-export default class node_t
+/**
+ * 
+ */
+
+class node_t
 {
-	set_position(x,y)
+	/**
+	 * 
+	 * @param {number} x 
+	 * @param {number} y 
+	 */
+	set_position(x, y)
 	{
 		this.x=x;
 		this.y=y;
 	}
 	
+	/**
+	 * @returns {string}
+	 */
 	get_label()
 	{
 		return this.text;
 		//this.output.state.constructor.name
 	}
+
+	/**
+	 * 
+	 */
 	
 	set_initial_value()
 	{
 	}
 	
+	/**
+	 * 
+	 */
+
 	freeze()
 	{
 		return {
@@ -33,6 +53,11 @@ export default class node_t
 		};
 	}
 	
+	/**
+	 * 
+	 * @param {object} o 
+	 */
+
 	thaw(o)
 	{
 		//load data from o
@@ -40,6 +65,10 @@ export default class node_t
 		this.y = o.y;
 	}
 
+	/**
+	 * 
+	 * @param {string} text 
+	 */
 	constructor(text)
 	{
 		this.x = 0;
@@ -80,6 +109,9 @@ export default class node_t
 		}
 	}
 	
+	/**
+	 * 
+	 */
 	remove_all_inputs()
 	{
 		for(let i = this.signals.length - 1; i>=0; i--)
@@ -90,6 +122,9 @@ export default class node_t
 		this.inputs = [];
 	}
 	
+	/**
+	 * 
+	 */
 	remove_all_outputs()
 	{
 		for(let i = this.signals.length - 1; i>=0; i--)
@@ -101,10 +136,18 @@ export default class node_t
 		this.output = null;
 	}
 	
+	/**
+	 * 
+	 */
 	value_changed()
 	{
 	}
 	
+	/**
+	 * 
+	 * @param {string} type 
+	 * @param {string} [label]
+	 */
 	add_signal(type, label)
 	{
 		if(label==null)
@@ -128,6 +171,11 @@ export default class node_t
 		}
 	}
 	
+	/**
+	 * 
+	 * @param {number} x 
+	 * @param {number} y 
+	 */
 	move_absolute(x,y)
 	{
 		let dx = x-this.x;
@@ -143,6 +191,9 @@ export default class node_t
 		*/
 	}
 	
+	/**
+	 * 
+	 */
 	remove()
 	{
 		for(let itx in this.signals)
@@ -156,6 +207,11 @@ export default class node_t
 		}
 	}
 	
+	/**
+	 * 
+	 * @param {number} x 
+	 * @param {number} y 
+	 */
 	get_selected_signal(x,y)
 	{
 		for(let inp in this.signals)
@@ -166,6 +222,10 @@ export default class node_t
 		return null;
 	}
 	
+	/**
+	 * 
+	 * @param {boolean} selected 
+	 */
 	draw(selected)
 	{
 		/*
@@ -211,6 +271,11 @@ export default class node_t
 		}
 	}
 	
+	/**
+	 * 
+	 * @param {number} x 
+	 * @param {number} y 
+	 */
 	in_bounds(x, y)
 	{
 		let v = 30;
@@ -221,3 +286,5 @@ export default class node_t
 		return x >= tx && x <= tx + tw && y >= ty && y <= ty + th;
 	}
 };
+
+export default node_t;

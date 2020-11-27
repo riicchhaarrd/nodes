@@ -1,7 +1,14 @@
 import node_t from "./node_t.js";
 
-export default class node_rand extends node_t
+/**
+ * 
+ */
+
+class node_rand extends node_t
 {
+	/**
+	 * 
+	 */
 	constructor()
 	{
 		super("random");
@@ -9,3 +16,5 @@ export default class node_rand extends node_t
 		this.remove_all_inputs();
 	}
 };
+
+export default node_rand;

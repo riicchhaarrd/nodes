@@ -1,14 +1,24 @@
 import node_t from "./node_t.js";
 import vec3 from "./vec3.js";
 
-export default class node_color extends node_t
+/**
+ * 
+ */
+
+class node_color extends node_t
 {
+	/**
+	 * 
+	 */
 	constructor()
 	{
 		super("color");
 		this.add_signal("input");
 	}
 	
+	/**
+	 * 
+	 */
 	value_changed()
 	{
 		let r = this.inputs[0].get_state();
@@ -21,3 +31,5 @@ export default class node_color extends node_t
 		this.output.set_state(new vec3(r,g,b));
 	}
 };
+
+export default node_color;
