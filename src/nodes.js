@@ -69,7 +69,7 @@ export function prompt_proxy()
  * 
  */
 
-var app = new Vue({
+export var app = new Vue({
 	el: "#app",
 	data: function()
 	{
@@ -144,7 +144,7 @@ var app = new Vue({
  * @function
  */
 
-function get_selected_node()
+export function get_selected_node()
 {
 	for(let itx in nodes)
 	{
@@ -159,7 +159,7 @@ function get_selected_node()
  * @function
  */
 
-function draw()
+export function draw()
 {
 	if(ctx==null)return;
 	if(selected_node != null && moving)
@@ -189,7 +189,7 @@ function draw()
  * @function
  */
 
-function init()
+export function init()
 {
 	//https://stackoverflow.com/questions/1255512/how-to-draw-a-rounded-rectangle-on-html-canvas
 	CanvasRenderingContext2D.prototype.roundRect = function (x, y, w, h, r) {
@@ -364,9 +364,3 @@ window.requestAnimationFrame(()=>
 	window.requestAnimationFrame(draw);
 	dummy=false;
 });
-
-export default {
-    a: 1,
-    b: 2,
-    c: 3
-};

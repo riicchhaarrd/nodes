@@ -6,4 +6,7 @@
 <div v-for="(n, i) in registered_nodes"><button @click="add_node(n)">{{ n.get_label() }}</button></div>
 </div>
 </div>
-<script type="module" src="./src/nodes.js"></script>
+<script type="module">
+    import * as nodes from "./src/nodes.js";
+    window.nodes = nodes;
+</script>
