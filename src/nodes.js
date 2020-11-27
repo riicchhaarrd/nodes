@@ -70,6 +70,21 @@ export function prompt_proxy()
 
 /**
  * 
+ * @param {string} hash 
+ * @returns {node_t|null}
+ */
+
+export function findNodeByHash(hash) {
+	for (var node of nodes) {
+		if (node.hash() == hash) {
+			return node;
+		}
+	}
+	return null;
+}
+
+/**
+ * 
  */
 
 export var app = new Vue({
@@ -99,6 +114,52 @@ export var app = new Vue({
 					inst.thaw(list[i]);
 					nodes.push(inst);
 				}
+			
+				// When every node is restored, restore the links between them
+				let tmpLinks = window.localStorage.getItem("links");
+				if(tmpLinks != null)
+				{
+					let links = JSON.parse(tmpLinks);
+					for (var link of links) {
+						var from_node_str   = link.from_node;
+						var from_signal_str = link.from_signal;
+						var to_node_str     = link.to_node;
+						var to_signal_str   = link.to_signal;
+						// 
+						var from_node = findNodeByHash(from_node_str);
+						var from_signal;
+						if (from_node) {	
+							for (var output of from_node.outputs) {
+								if (output.label == from_signal_str) {
+									from_signal = output;
+									break;
+								}
+							}
+						}
+						//
+						var to_node = findNodeByHash(to_node_str);
+						var to_signal;
+						if (to_node) {
+							for (var input of to_node.inputs) {
+								if (input.label == to_signal_str) {
+									to_signal = input;
+									break;
+								}
+							}
+						}
+						//
+						if (false) {
+							console.log("from_node", from_node.constructor.name);
+							console.log("from_signal", from_signal);
+							console.log("to_node", to_node.constructor.name);
+							console.log("to_signal", to_signal);
+						}
+						// Link them together
+						if (from_signal && to_signal)
+							from_signal.link = to_signal;
+					}
+				}
+
 				return true;
 			}
 			return false;
