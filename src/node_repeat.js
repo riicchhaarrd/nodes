@@ -13,8 +13,7 @@ class node_repeat extends node_t
 	constructor()
 	{
 		super("repeater");
-		this.remove_all_outputs();
-		this.add_signal("output");
+		this.addOutput("output");
 		this.output = new signal_proxy(this,"output",function(){});
 	}
 	

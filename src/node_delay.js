@@ -12,7 +12,7 @@ class node_delay extends node_stmt
 	constructor()
 	{
 		super("delay", "wait", {seconds:''});
-		this.add_signal("output", "exec");
+		this.output = this.addOutput("exec");
 	}
 };
 

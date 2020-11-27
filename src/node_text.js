@@ -7,17 +7,26 @@ import node_t from "./node_t.js";
 
 class node_text extends node_t
 {
+	/**
+	 * 
+	 */
 	constructor()
 	{
 		super("text");
-		this.remove_all_inputs();
+		this.output = this.addOutput("text");
 	}
 	
+	/**
+	 * 
+	 */
 	set_initial_value()
 	{
 		this.output.set_state((prompt_proxy()));
 	}
 
+	/**
+	 * 
+	 */
 	freeze()
 	{
 		var frozenfood = super.freeze();
@@ -25,6 +34,10 @@ class node_text extends node_t
 		return frozenfood;
 	}
 	
+	/**
+	 * 
+	 * @param {object} o 
+	 */
 	thaw(o)
 	{
 		this.output.set_state(o.text);

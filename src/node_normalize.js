@@ -13,8 +13,8 @@ class node_normalize extends node_t
 	constructor()
 	{
 		super("normalize");
-		this.remove_all_inputs();
-		this.add_signal("input");
+		this.inputVec3 = this.addInput("vec3");
+		this.output = this.addOutput("vec3");
 	}
 	
 	/**
@@ -22,7 +22,7 @@ class node_normalize extends node_t
 	 */
 	value_changed()
 	{
-		let a = this.inputs[0].get_state();
+		let a = this.inputVec3.get_state();
 		if(typeof a == "object" && a.constructor.name == "vec3")
 		{
 			let dot = function(a,b)

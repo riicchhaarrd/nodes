@@ -11,13 +11,17 @@ class node_vec3 extends node_t
 	constructor()
 	{
 		super("vec3");
-		this.remove_all_inputs();
+		this.output = this.addOutput("vec3");
 	}
 	
 	set_initial_value()
 	{
 		this.output.set_state(
-			new vec3(parseFloat(prompt_proxy()),parseFloat(prompt_proxy()),parseFloat(prompt_proxy()))
+			new vec3(
+				parseFloat(prompt_proxy()),
+				parseFloat(prompt_proxy()),
+				parseFloat(prompt_proxy())
+			)
 		);
 	}
 };

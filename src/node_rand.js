@@ -12,8 +12,14 @@ class node_rand extends node_t
 	constructor()
 	{
 		super("random");
+		this.output = this.addOutput("number");
+	}
+
+	/**
+	 * 
+	 */
+	set_initial_value() {
 		this.output.set_state(Math.random());
-		this.remove_all_inputs();
 	}
 };
 

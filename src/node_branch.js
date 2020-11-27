@@ -13,11 +13,9 @@ class node_branch extends node_t
 	constructor()
 	{
 		super("branch");
-		this.remove_all_inputs();
-		this.add_signal("input");
-		this.remove_all_outputs();
-		this.add_signal("output");
-		this.add_signal("output");
+		this.addInput("in");
+		this.addOutput("a");
+		this.addOutput("b");
 		this.output = new signal_proxy(this,"output",function(){});
 	}
 	

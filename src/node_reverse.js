@@ -12,8 +12,8 @@ class node_reverse extends node_t
 	constructor()
 	{
 		super("Reverse");
-		this.remove_all_inputs();
-		this.add_signal("input", "List|String")
+		this.input = this.addInput("List|String");
+		this.output = this.addOutput("output");
 	}
 	
 	/**
@@ -29,7 +29,7 @@ class node_reverse extends node_t
 	 */
 	value_changed() {
 		var o;
-		let input = this.inputs[0].get_state();
+		let input = this.input.get_state();
 		if (typeof input == "string") {
 			o = input.split("").reverse().join("");
 		}

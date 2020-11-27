@@ -13,7 +13,7 @@ class node_constant extends node_t
 	constructor()
 	{
 		super("constant");
-		this.remove_all_inputs();
+		this.output = this.addOutput("number");
 	}
 	
 	/**
@@ -22,6 +22,26 @@ class node_constant extends node_t
 	set_initial_value()
 	{
 		this.output.set_state(parseFloat(prompt_proxy()));
+	}
+
+	/**
+	 * 
+	 */
+	freeze()
+	{
+		var frozenfood = super.freeze();
+		frozenfood.constant = this.output.get_state();
+		return frozenfood;
+	}
+	
+	/**
+	 * 
+	 * @param {object} o 
+	 */
+	thaw(o)
+	{
+		this.output.set_state(o.constant);
+		super.thaw(o);
 	}
 };
 

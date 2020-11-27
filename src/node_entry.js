@@ -10,9 +10,7 @@ class node_entry extends node_t
 	constructor()
 	{
 		super("entry point / main");
-		this.remove_all_inputs();
-		this.remove_all_outputs();
-		this.add_signal("output");
+		this.addOutput("output");
 		this.output = new signal_proxy(this,"output",function(){});
 	}
 };

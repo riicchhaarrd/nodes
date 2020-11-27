@@ -12,8 +12,8 @@ class node_stringjoin extends node_t
 	constructor()
 	{
 		super("StringJoin");
-		this.remove_all_inputs();
-		this.add_signal("input", "list of chars");
+		this.input = this.addInput("list of chars");
+		this.output = this.addOutput("out");
 	}
 	
 	/**
@@ -29,7 +29,7 @@ class node_stringjoin extends node_t
 	 */
 	value_changed() {
 		var o;
-		let input = this.inputs[0].get_state();
+		let input = this.input.get_state();
 		if (input instanceof Array) {
 			o = input.join("");
 		}

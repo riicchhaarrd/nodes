@@ -12,8 +12,8 @@ class node_sort extends node_t
 	constructor()
 	{
 		super("Sort");
-		this.remove_all_inputs();
-		this.add_signal("input", "List");
+		this.input = this.addInput("List");
+		this.output = this.addOutput("output");
 	}
 	
 	/**
@@ -29,7 +29,7 @@ class node_sort extends node_t
 	 */
 	value_changed() {
 		var o;
-		let input = this.inputs[0].get_state();
+		let input = this.input.get_state();
 		if (input instanceof Array) {
 			var copy = input.slice(0);
 			o = copy.sort();

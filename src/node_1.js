@@ -12,8 +12,7 @@ class node_1 extends node_t
 	constructor()
 	{
 		super("constant 1");
-		this.output.set_state(1);
-		this.remove_all_inputs();
+		this.output = this.addOutput("number");
 	}
 	
 	/**

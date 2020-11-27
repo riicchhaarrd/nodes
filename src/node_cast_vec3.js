@@ -13,8 +13,8 @@ class node_cast_vec3 extends node_t
 	constructor()
 	{
 		super("cast vec3");
-		this.remove_all_inputs();
-		this.add_signal("input");
+		this.input = this.addInput("in");
+		this.output = this.addOutput("out");
 	}
 	
 	/**
@@ -22,7 +22,7 @@ class node_cast_vec3 extends node_t
 	 */
 	value_changed()
 	{
-		let v = this.inputs[0].get_state();
+		let v = this.input.get_state();
 		if(!isNaN(v))
 		{
 			this.output.set_state(new vec3(v,v,v));

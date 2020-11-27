@@ -18,11 +18,9 @@ class node_stmt extends node_t
 		super(n);
 		this.func_name = func_name;
 		this.parms = [];
-		this.remove_all_inputs();
-		this.add_signal("input", "exec");
+		this.addInput("exec");
 		for(let itx in parms)
 			this.add_signal("input", itx);
-		this.remove_all_outputs();
 		this.output = new signal_proxy(this,"output",function(){});
 	}
 	

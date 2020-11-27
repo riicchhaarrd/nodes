@@ -116,13 +116,34 @@ export var app = new Vue({
 		save_nodes: function()
 		{
 			let serializable_nodes = [];
-			for(let i = 0; i < nodes.length; ++i)
+			let serializable_links = [];
+			// Seralize nodes
+			for (var node of nodes)
 			{
-				let n = nodes[i];
-				let serializable_node_data = n.freeze();
-				serializable_nodes.push(serializable_node_data);
+				let serializable_node_data = node.freeze();
+				serializable_nodes.push(serializable_node_data);	
 			}
+			// Serialize links
+			for (var node of nodes)
+			{
+				for (var output of node.outputs) {
+					if (output.link) {
+						var from_node = node.hash();
+						var from_signal = output.label;
+						var to_node = output.link.node.hash();
+						var to_signal = output.link.label;
+						serializable_links.push({
+							from_node,
+							from_signal,
+							to_node,
+							to_signal
+						});
+					}
+				}
+			}
+			//console.log("serializable_links", serializable_links);
 			window.localStorage.setItem("nodes", JSON.stringify(serializable_nodes));
+			window.localStorage.setItem("links", JSON.stringify(serializable_links));
 		},
 		register_node: function(n)
 		{

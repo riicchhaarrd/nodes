@@ -12,8 +12,8 @@ class node_tally extends node_t
 	constructor()
 	{
 		super("Tally");
-		this.remove_all_inputs();
-		this.add_signal("input", "string")
+		this.input = this.addInput("string")
+		this.output = this.addOutput("out");
 	}
 	
 	/**
@@ -28,7 +28,7 @@ class node_tally extends node_t
 	 * 
 	 */
 	value_changed() {
-		let input = this.inputs[0].get_state();
+		let input = this.input.get_state();
 
 		if (typeof input == "string") {
 			var parts = input.split("");

@@ -16,6 +16,9 @@ class node_mathop extends node_t
 	{
 		super(name);
 		this.op = op;
+		this.inputA = this.addInput("a");
+		this.inputB = this.addInput("b");
+		this.output = this.addOutput("number");
 	}
 	
 	/**
@@ -42,8 +45,8 @@ class node_mathop extends node_t
 	 */
 	value_changed()
 	{
-		let a = this.inputs[0].get_state();
-		let b = this.inputs[1].get_state();
+		let a = this.inputA.get_state();
+		let b = this.inputB.get_state();
 		if(typeof a == "number" && typeof b == "number")
 			this.output.set_state(this.eq(a,b));
 		else if(typeof a == "object" && typeof b == "object" && a.constructor.name == "vec3" && b.constructor.name == "vec3")

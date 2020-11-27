@@ -13,9 +13,7 @@ class node_exit extends node_t
 	constructor()
 	{
 		super("exit / stop program");
-		this.remove_all_inputs();
-		this.add_signal("input");
-		this.remove_all_outputs();
+		this.addInput("input");
 		this.output = new signal_proxy(this,"output",function(){});
 	}
 	

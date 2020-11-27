@@ -12,6 +12,7 @@ class node_printbold extends node_stmt
 	constructor()
 	{
 		super("iprintlnbold", "iprintlnbold", {message:''});
+		this.input = this.addInput("input");
 	}
 	
 	/**
@@ -19,7 +20,7 @@ class node_printbold extends node_stmt
 	 */
 	value_changed()
 	{
-		console.log(this.inputs[1].get_state());
+		console.log(this.input.get_state());
 	}
 };
 

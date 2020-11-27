@@ -6,12 +6,41 @@ import {
 } from "./nodes.js";
 import signal from "./signal.js";
 
-/**
- * 
- */
-
 class node_t
 {
+	/**
+	 * 
+	 * @param {string} text 
+	 */
+	constructor(text)
+	{
+		this.x = 0;
+		this.y = 0;
+		this.color = "rgb(255,255,255)";
+		ctx.font="24px arial";
+		let m = ctx.measureText(text);
+		this.width = m.width * 2;
+		this.height = (m.actualBoundingBoxAscent + m.actualBoundingBoxDescent) * 3;
+		this.text = text;
+		/**
+		 * @type {signal|null}
+		 */
+		this.link = null;
+		this.io_radius = this.height / 8;
+		/**
+		 * @type {signal[]}
+		 */
+		this.signals = [];
+		/**
+		 * @type {signal[]}
+		 */
+		this.inputs = [];
+		/**
+		 * @type {signal[]}
+		 */
+		this.outputs=[];
+	}
+	
 	/**
 	 * 
 	 * @param {number} x 
@@ -67,50 +96,6 @@ class node_t
 
 	/**
 	 * 
-	 * @param {string} text 
-	 */
-	constructor(text)
-	{
-		this.x = 0;
-		this.y = 0;
-		
-		this.color = "rgb(255,255,255)";
-		ctx.font="24px arial";
-		let m = ctx.measureText(text);
-		this.width = m.width * 2;
-		this.height = (m.actualBoundingBoxAscent + m.actualBoundingBoxDescent) * 3;
-		this.text = text;
-		
-		this.link = null;
-		
-		this.signals = [];
-		
-		let rad = this.height / 8;
-		this.io_radius = rad;
-		this.inputs = [];
-		for(let i = 0; i < 2; ++i)
-		{
-			let inp = new signal(this, "", "input", 0,(i+1)*rad*3-rad/2,rad);
-			this.inputs.push(inp);
-			
-			this.signals.push(
-				inp
-			);
-		}
-		this.outputs=[];
-		this.output = new signal(this, "", "output", this.width,this.height/2-rad/2,rad);
-		for(let i = 0; i < 1; ++i)
-		{
-			this.signals.push(
-				//new signal("output", this.x+this.width-rad*2,this.y+(i+1)*rad*3,rad)
-				this.output
-			);
-			this.outputs.push(this.output);
-		}
-	}
-	
-	/**
-	 * 
 	 */
 	remove_all_inputs()
 	{
@@ -146,12 +131,11 @@ class node_t
 	/**
 	 * 
 	 * @param {string} type 
-	 * @param {string} [label]
+	 * @param {string} label
+	 * @returns {signal}
 	 */
 	add_signal(type, label)
 	{
-		if(label==null)
-			label="";
 		if(type == "input")
 		{
 			let sig = new signal(this, label, "input", 0,(this.inputs.length+1)*this.io_radius*3-this.io_radius/2,this.io_radius);
@@ -160,6 +144,7 @@ class node_t
 			this.signals.push(
 				sig
 			);
+			return sig;
 		} else if(type == "output")
 		{
 			let sig = new signal(this, label, "output", this.width,(this.outputs.length+1)*this.io_radius*3-this.io_radius/2,this.io_radius);
@@ -168,9 +153,30 @@ class node_t
 				sig
 			);
 			this.outputs.push(sig);
+			return sig;
 		}
 	}
-	
+
+	/**
+	 * 
+	 * @param {string} label 
+	 * @returns {signal}
+	 */
+
+	addInput(label) {
+		return this.add_signal("input", label);
+	}
+		
+	/**
+	 * 
+	 * @param {string} label
+	 * @returns {signal}
+	 */
+
+	addOutput(label) {
+		return this.add_signal("output", label);
+	}
+
 	/**
 	 * 
 	 * @param {number} x 
@@ -264,10 +270,10 @@ class node_t
 			ctx.font="12px arial";
 			ctx.fillText(this.output.state==null?"null":this.output.state.constructor.name, this.x + this.width * (0.25), this.y + this.height - 5);		
 		ctx.restore();
-		for(let inp in this.signals)
+		for(let signal of this.signals)
 		{
-			let selected = this.signals[inp].in_bounds(mouse_x,mouse_y);
-			this.signals[inp].draw(this.x,this.y,selected || selected_signal == this.signals[inp]);
+			let selected = signal.in_bounds(mouse_x,mouse_y);
+			signal.draw(this.x,this.y,selected || selected_signal == signal);
 		}
 	}
 	
@@ -284,6 +290,13 @@ class node_t
 		let tw = this.width + v * 2;
 		let th = this.height + v * 2;
 		return x >= tx && x <= tx + tw && y >= ty && y <= ty + th;
+	}
+
+	/**
+	 * @returns {string}
+	 */
+	hash() {
+		return this.x + "-" + this.y;
 	}
 };
 

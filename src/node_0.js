@@ -12,7 +12,7 @@ class node_0 extends node_t
 	constructor()
 	{
 		super("constant 0");
-		this.remove_all_inputs();
+		this.output = this.addOutput("constant");
 	}
 
 	/**
