@@ -23,6 +23,7 @@ class signal {
 		this.x=x;
 		this.y=y;
 		this.radius = rad;
+		/** @type {any} */
 		this.state = "?";
 		this.link = null;
 	}

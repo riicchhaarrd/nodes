@@ -56,6 +56,8 @@ import node_rand from "./node_rand.js";
 import node_t from "./node_t.js";
 import node_tally from "./node_tally.js";
 import node_vec3 from "./node_vec3.js";
+import node_bezier from "./node_bezier.js";
+import node_vec2 from "./node_vec2.js";
 
 /**
  * @function
@@ -423,6 +425,7 @@ export function init()
 	app.register_node(new node_normalize());
 	app.register_node(new node_extract_vec3());
 	app.register_node(new node_constant());
+	app.register_node(new node_vec2());
 	app.register_node(new node_vec3());
 	
 	app.register_node(new node_text());
@@ -441,6 +444,7 @@ export function init()
 	app.register_node(new node_stringjoin());
 	app.register_node(new node_tally());
 	app.register_node(new node_characters());
+	app.register_node(new node_bezier());
 
 	main_node = new node_entry();
 	if(!app.load_nodes())
