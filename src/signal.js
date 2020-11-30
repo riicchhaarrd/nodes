@@ -53,7 +53,7 @@ class signal {
 	{
 		let dx = x-(this.x+this.node.x);
 		let dy = y-(this.y+this.node.y);
-		let dist = Math.sqrt(dx*dx+dy*dy);
+		let dist = dx*dx+dy*dy;
 		return dist < this.radius*2;
 	}
 	
