@@ -266,10 +266,14 @@ class node_t
 		ctx.restore();
 		ctx.fillText(this.text, this.x + this.width * (0.25), this.y + this.height - this.height * (1/3));
 		
-		ctx.save();
+		// Write type of this.output
+		if (this.output) {
+			ctx.save();
 			ctx.font="12px arial";
 			ctx.fillText(this.output.state==null?"null":this.output.state.constructor.name, this.x + this.width * (0.25), this.y + this.height - 5);		
-		ctx.restore();
+			ctx.restore();
+		}
+
 		for(let signal of this.signals)
 		{
 			let selected = signal.in_bounds(mouse_x,mouse_y);
